@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>Bus Status</title>
+	<link rel="icon" href="/bus.svg" type="image/x-icon" />
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			padding: 40px;
+			background: linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%);
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			gap: 1rem;
+		}
+
+		.road {
+			position: relative;
+			height: 100px;
+			width: 600px;
+			max-width: 100%;
+			margin: 0 auto 2rem;
+			background: #555;
+			border-radius: 20px;
+			box-shadow: inset 0 0 10px #333;
+			overflow: hidden;
+		}
+
+		.road::before {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 0;
+			right: 0;
+			height: 6px;
+			background:
+				repeating-linear-gradient(to right,
+					white 0 20px,
+					transparent 20px 40px);
+			transform: translateY(-50%);
+			z-index: 1;
+		}
+
+		.bus {
+			font-size: 70px;
+			position: absolute;
+			top: 50%;
+			left: 0;
+			transform: translateY(-50%);
+			will-change: transform, color;
+			transition: color 0.3s ease;
+			z-index: 10;
+			transform-origin: center;
+		}
+
+		.flip-horizontal {
+			transform: scaleX(-1);
+		}
+
+		/* Animation speeds for bus */
+		@keyframes bus-move {
+			0% {
+				transform: translateX(0) translateY(-50%);
+			}
+
+			50% {
+				transform: translateX(calc(100% - 70px)) translateY(-50%);
+			}
+
+			100% {
+				transform: translateX(0) translateY(-50%);
+			}
+		}
+
+		/* Different animation durations */
+		.early {
+			color: #007bff;
+			animation: bus-move 2.5s linear infinite;
+		}
+
+		.on-time {
+			color: #28a745;
+			animation: bus-move 4s linear infinite;
+		}
+
+		.late {
+			color: #dc3545;
+			animation: bus-move 7s linear infinite;
+		}
+
+		.cancelled {
+			color: #6c757d;
+			animation: none;
+		}
+
+		.status-text {
+			font-size: 1.5rem;
+			font-weight: bold;
+		}
+
+		.times {
+			font-size: 1rem;
+			color: #444;
+			font-family: monospace;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Bus Status</h1>
+	<div class="road">
+		<div id="busIcon" class="bus">🚌</div>
+	</div>
+	<div class="status-text" id="statusText">Loading...</div>
+	<div class="times" id="timesText"></div>
+
+	<script>
+		function secondsToHHMMSS(seconds) {
+			const date = new Date(seconds * 1000);
+			return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+		}
+
+		function getAnimationDuration(status) {
+			switch (status) {
+				case 'early': return 3000;   // 3 seconds
+				case 'on_time': return 6000; // 6 seconds
+				case 'late': return 9000;    // 9 seconds
+				default: return 6000;
+			}
+		}
+
+		let currentStatus = null;
+
+		async function fetchStatus() {
+			try {
+				const res = await fetch('/status');
+				const data = await res.json();
+
+				if (!data.estimatedTime || !data.scheduledTime) {
+					statusText.textContent = 'No upcoming bus found.';
+					timesText.textContent = '';
+					return;
+				}
+
+				// Set current status for animation speed
+				currentStatus = data.status;
+
+				// Update textual info
+				statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
+				timesText.textContent = `Scheduled: ${secondsToHHMMSS(data.scheduledTime)} | Estimated: ${secondsToHHMMSS(data.estimatedTime)}`;
+			} catch (e) {
+				console.error(e);
+				statusText.textContent = 'Error loading status';
+			}
+		}
+
+		// Initial fetch + interval refresh every 30 seconds
+		fetchStatus();
+		setInterval(fetchStatus, 30000);
+		const busIcon = document.getElementById('busIcon');
+		const road = document.querySelector('.road');
+
+		const busWidthPx = busIcon.offsetWidth;
+		let roadWidthPx = road.offsetWidth;
+
+		let start = null;
+		let duration = 6000; // 6 seconds for full left to right
+
+		function animate(timestamp) {
+			if (!start) start = timestamp;
+
+			roadWidthPx = road.offsetWidth;
+			duration = getAnimationDuration(currentStatus);
+
+			const elapsed = timestamp - start;
+			const progress = (elapsed / duration) % 1; // Loop the animation
+
+			const positionPx = progress * (roadWidthPx + busWidthPx) - busWidthPx;
+
+			busIcon.style.transform = `translateX(calc(${positionPx}px)) translateY(-50%) scaleX(-1)`;
+
+			requestAnimationFrame(animate);
+		}
+
+		requestAnimationFrame(animate);
+
+	</script>
+
+</body>
+
+</html>
