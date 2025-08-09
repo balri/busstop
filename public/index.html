@@ -207,8 +207,8 @@
 					// Stop polling /status
 					stopPolling();
 
-					statusText.textContent = data.secretMessage;
-					timesText.textContent = '';
+					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
+					timesText.textContent = 'The bus has arrived on time! You keyword is: ' + data.secretMessage;
 				} else {
 					// Resume normal animation
 					driveToCentre = false;
