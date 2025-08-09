@@ -1,18 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const sqlite3 = require('sqlite3').verbose();
 
 const TARGET_ROUTE_ID = '61-4158';
 const TARGET_STOP_ID = '3054';
 
 const GTFS_DIR = '../feeds'; // Folder where your GTFS files live (trips.txt, stop_times.txt)
-const DB_FILE = 'busdata.db'; // SQLite database file
+const OUTPUT_FILE = 'stop_times_filtered.json'; // Output JSON file
 
 const tripsFile = path.join(GTFS_DIR, 'trips.txt');
 const stopTimesFile = path.join(GTFS_DIR, 'stop_times.txt');
-
-const db = new sqlite3.Database(DB_FILE);
 
 async function parseTrips() {
 	return new Promise((resolve, reject) => {
@@ -33,58 +30,36 @@ async function parseTrips() {
 	});
 }
 
-async function importFilteredStopTimes(tripIds) {
+async function filterStopTimes(tripIds) {
 	return new Promise((resolve, reject) => {
-		db.serialize(() => {
-			// Create table and index
-			db.run(`DROP TABLE IF EXISTS stop_times_filtered`);
-			db.run(`CREATE TABLE stop_times_filtered (
-				trip_id TEXT,
-				stop_id TEXT,
-				arrival_time TEXT,
-				departure_time TEXT,
-				stop_sequence INTEGER
-			)`);
-			db.run(`CREATE INDEX idx_trip_stop ON stop_times_filtered(trip_id, stop_id)`);
+		const filtered = [];
 
-			const insertStmt = db.prepare(
-				`INSERT INTO stop_times_filtered (trip_id, stop_id, arrival_time, departure_time, stop_sequence) VALUES (?, ?, ?, ?, ?)`
-			);
-
-			let rowCount = 0;
-
-			fs.createReadStream(stopTimesFile)
-				.pipe(csv())
-				.on('data', (row) => {
-					if (tripIds.has(row.trip_id) && row.stop_id === TARGET_STOP_ID) {
-						insertStmt.run(
-							row.trip_id,
-							row.stop_id,
-							row.arrival_time,
-							row.departure_time,
-							Number(row.stop_sequence)
-						);
-						rowCount++;
-					}
-				})
-				.on('end', () => {
-					insertStmt.finalize();
-					console.log(`Imported ${rowCount} stop_times rows matching route ${TARGET_ROUTE_ID} and stop ${TARGET_STOP_ID}`);
-					resolve();
-				})
-				.on('error', reject);
-		});
+		fs.createReadStream(stopTimesFile)
+			.pipe(csv())
+			.on('data', (row) => {
+				if (tripIds.has(row.trip_id) && row.stop_id === TARGET_STOP_ID) {
+					filtered.push({
+						trip_id: row.trip_id,
+						arrival_time: row.arrival_time
+					});
+				}
+			})
+			.on('end', () => {
+				console.log(`Filtered ${filtered.length} stop_times rows matching route ${TARGET_ROUTE_ID} and stop ${TARGET_STOP_ID}`);
+				resolve(filtered);
+			})
+			.on('error', reject);
 	});
 }
 
 async function main() {
 	try {
 		const tripIds = await parseTrips();
-		await importFilteredStopTimes(tripIds);
-		console.log('Import complete.');
-		db.close();
+		const filteredStopTimes = await filterStopTimes(tripIds);
+		fs.writeFileSync(OUTPUT_FILE, JSON.stringify(filteredStopTimes, null, 2));
+		console.log(`Exported filtered stop times to ${OUTPUT_FILE}`);
 	} catch (err) {
-		console.error('Error during import:', err);
+		console.error('Error during export:', err);
 	}
 }
 

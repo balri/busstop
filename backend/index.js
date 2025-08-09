@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 
 // Stub GTFS-RT feed URL
@@ -16,18 +17,16 @@ const PORT = process.env.PORT || 3000;
 
 const db = new sqlite3.Database(path.join(__dirname, 'busdata.db'));
 
-function getScheduledTime(tripId, stopId) {
-	return new Promise((resolve, reject) => {
-		db.get(
-			`SELECT arrival_time FROM stop_times_filtered WHERE trip_id = ? AND stop_id = ?`,
-			[tripId, stopId],
-			(err, row) => {
-				if (err) return reject(err);
-				if (!row) return resolve(null);
-				resolve(row.arrival_time);
-			}
-		);
-	});
+// Load stop_times_filtered.json once at startup
+const stopTimes = JSON.parse(
+	fs.readFileSync(path.join(__dirname, 'stop_times_filtered.json'), 'utf8')
+);
+
+function getScheduledTime(tripId) {
+	const entry = stopTimes.find(
+		(row) => row.trip_id === tripId
+	);
+	return entry ? entry.arrival_time : null;
 }
 
 function scheduledTimeToUnix(startDate, scheduledTime) {
@@ -78,8 +77,8 @@ app.get('/status', async (req, res) => {
 		}
 
 		if (nextBus) {
-			// Get scheduled time from SQLite DB
-			const scheduledStr = await getScheduledTime(nextBus.tripId, TARGET_STOP_ID);
+			// Get scheduled time from JSON
+			const scheduledStr = getScheduledTime(nextBus.tripId);
 
 			let scheduledTimeUnix = null;
 			if (scheduledStr) {
