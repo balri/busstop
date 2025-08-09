@@ -12,3 +12,7 @@ node backend/index.js
 # Feeds
 
 Download the feed from https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip
+
+# Uptime Monitor
+
+https://dashboard.uptimerobot.com/monitors/801132204

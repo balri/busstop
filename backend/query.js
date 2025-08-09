@@ -7,7 +7,7 @@ const db = new sqlite3.Database(path.join(__dirname, 'busdata.db'));
 // Group delays into minute bands and count
 db.all(
 	`SELECT
-        CAST(delay_seconds / 300 AS INTEGER) AS minute_band,
+        CAST(delay_seconds / 240 AS INTEGER) AS minute_band,
         COUNT(*) AS count
     FROM bus_checks
     GROUP BY minute_band
