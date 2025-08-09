@@ -120,6 +120,7 @@
 		let start = null;
 		let duration = 6000; // 6 seconds for full left to right
 		let pollTimer = null;
+		let busParked = false;
 
 		const busWidth = busIcon.offsetWidth;
 		const roadWidth = road.offsetWidth;
@@ -152,9 +153,11 @@
 		}
 
 		function animateBus(timestamp) {
+			if (busParked) return; // 🔒 once parked, stop completely
+
 			if (!driveToCentre) {
-				// Normal infinite animation: just a simple left-to-right loop for demo
-				const speed = 100; // px per second
+				// 🚍 normal loop
+				const speed = 100; // px/sec
 				if (!animateBus.lastTimestamp) animateBus.lastTimestamp = timestamp;
 				const delta = timestamp - animateBus.lastTimestamp;
 				animateBus.lastTimestamp = timestamp;
@@ -164,16 +167,16 @@
 
 				animationId = requestAnimationFrame(animateBus);
 			} else {
-				// Drive to centre logic
-				const step = 5;
-				if (Math.abs(currentX - centreX) < step) {
+				// 🅿 drive to centre
+				const distance = centreX - currentX;
+				if (Math.abs(distance) < 1) {
 					currentX = centreX;
 					busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
-					busIcon.classList.add('bus-parked');
+					busParked = true;
 					cancelAnimationFrame(animationId);
 					animationId = null;
 				} else {
-					currentX += currentX < centerX ? step : -step;
+					currentX += distance * 0.05; // easing
 					busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
 					animationId = requestAnimationFrame(animateBus);
 				}
@@ -196,10 +199,9 @@
 				// Set current status for animation speed
 				currentStatus = data.status;
 
-
-				if (data.secretMessage) {
+				if (data.secretMessage && !busParked) {
 					// Stop normal animation, start drive to center animation
-					driveToCenter = true;
+					driveToCentre = true;
 					if (!animationId) animationId = requestAnimationFrame(animateBus);
 
 					// Stop polling /status
@@ -209,7 +211,7 @@
 					timesText.textContent = '';
 				} else {
 					// Resume normal animation
-					driveToCenter = false;
+					driveToCentre = false;
 					busIcon.classList.remove('bus-parked');
 
 					// Reset to start position if needed
