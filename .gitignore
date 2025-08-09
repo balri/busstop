@@ -2,3 +2,4 @@
 feeds
 backend/busdata.db
 backend/cron.log
+backend/node_modules

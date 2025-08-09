@@ -16,16 +16,20 @@
 			flex-direction: column;
 			justify-content: center;
 			gap: 1rem;
+			margin: 0;
+			padding: 0;
 		}
 
 		.road {
 			position: relative;
 			height: 100px;
-			width: 600px;
-			max-width: 100%;
+			width: 100vw;
+			/* full viewport width */
+			max-width: none;
+			/* remove max-width limit */
 			margin: 0 auto 2rem;
 			background: #555;
-			border-radius: 20px;
+			border-radius: 0;
 			box-shadow: inset 0 0 10px #333;
 			overflow: hidden;
 		}
@@ -76,27 +80,6 @@
 			}
 		}
 
-		/* Different animation durations */
-		.early {
-			color: #007bff;
-			animation: bus-move 2.5s linear infinite;
-		}
-
-		.on-time {
-			color: #28a745;
-			animation: bus-move 4s linear infinite;
-		}
-
-		.late {
-			color: #dc3545;
-			animation: bus-move 7s linear infinite;
-		}
-
-		.cancelled {
-			color: #6c757d;
-			animation: none;
-		}
-
 		.status-text {
 			font-size: 1.5rem;
 			font-weight: bold;
@@ -106,6 +89,13 @@
 			font-size: 1rem;
 			color: #444;
 			font-family: monospace;
+		}
+
+		.bus-parked {
+			animation: none !important;
+			/* Keep bus vertically centered */
+			transform: translateX(0) translateY(-50%) scaleX(-1) !important;
+			transition: none;
 		}
 	</style>
 </head>
@@ -119,6 +109,34 @@
 	<div class="times" id="timesText"></div>
 
 	<script>
+		const statusText = document.getElementById('statusText');
+		const busIcon = document.getElementById('busIcon');
+		const road = document.querySelector('.road');
+
+		let animationId = null;
+		let driveToCentre = false;
+		let currentX = 0;
+		let currentStatus = null;
+		let start = null;
+		let duration = 6000; // 6 seconds for full left to right
+		let pollTimer = null;
+
+		const busWidth = busIcon.offsetWidth;
+		const roadWidth = road.offsetWidth;
+		const centreX = (roadWidth - busWidth) / 2;
+
+		function startPolling() {
+			if (pollTimer) return; // Prevent multiple intervals
+			pollTimer = setInterval(fetchStatus, 30000);
+		}
+
+		function stopPolling() {
+			if (pollTimer) {
+				clearInterval(pollTimer);
+				pollTimer = null;
+			}
+		}
+
 		function secondsToHHMMSS(seconds) {
 			const date = new Date(seconds * 1000);
 			return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -133,7 +151,36 @@
 			}
 		}
 
-		let currentStatus = null;
+		function animateBus(timestamp) {
+			if (!driveToCentre) {
+				// Normal infinite animation: just a simple left-to-right loop for demo
+				const speed = 100; // px per second
+				if (!animateBus.lastTimestamp) animateBus.lastTimestamp = timestamp;
+				const delta = timestamp - animateBus.lastTimestamp;
+				animateBus.lastTimestamp = timestamp;
+
+				currentX = (currentX + (speed * delta) / 1000) % (roadWidth - busWidth);
+				busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
+
+				animationId = requestAnimationFrame(animateBus);
+			} else {
+				// Drive to centre logic
+				const step = 5;
+				if (Math.abs(currentX - centreX) < step) {
+					currentX = centreX;
+					busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
+					busIcon.classList.add('bus-parked');
+					cancelAnimationFrame(animationId);
+					animationId = null;
+				} else {
+					currentX += currentX < centerX ? step : -step;
+					busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
+					animationId = requestAnimationFrame(animateBus);
+				}
+			}
+		}
+
+		animationId = requestAnimationFrame(animateBus);
 
 		async function fetchStatus() {
 			try {
@@ -149,9 +196,31 @@
 				// Set current status for animation speed
 				currentStatus = data.status;
 
-				// Update textual info
-				statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
-				timesText.textContent = `Scheduled: ${secondsToHHMMSS(data.scheduledTime)} | Estimated: ${secondsToHHMMSS(data.estimatedTime)}`;
+
+				if (data.secretMessage) {
+					// Stop normal animation, start drive to center animation
+					driveToCenter = true;
+					if (!animationId) animationId = requestAnimationFrame(animateBus);
+
+					// Stop polling /status
+					stopPolling();
+
+					statusText.textContent = data.secretMessage;
+					timesText.textContent = '';
+				} else {
+					// Resume normal animation
+					driveToCenter = false;
+					busIcon.classList.remove('bus-parked');
+
+					// Reset to start position if needed
+					currentX = 0;
+
+					if (!animationId) animationId = requestAnimationFrame(animateBus);
+
+					// Update textual info
+					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
+					timesText.textContent = `Scheduled: ${secondsToHHMMSS(data.scheduledTime)} | Estimated: ${secondsToHHMMSS(data.estimatedTime)}`;
+				}
 			} catch (e) {
 				console.error(e);
 				statusText.textContent = 'Error loading status';
@@ -159,35 +228,8 @@
 		}
 
 		// Initial fetch + interval refresh every 30 seconds
+		startPolling();
 		fetchStatus();
-		setInterval(fetchStatus, 30000);
-		const busIcon = document.getElementById('busIcon');
-		const road = document.querySelector('.road');
-
-		const busWidthPx = busIcon.offsetWidth;
-		let roadWidthPx = road.offsetWidth;
-
-		let start = null;
-		let duration = 6000; // 6 seconds for full left to right
-
-		function animate(timestamp) {
-			if (!start) start = timestamp;
-
-			roadWidthPx = road.offsetWidth;
-			duration = getAnimationDuration(currentStatus);
-
-			const elapsed = timestamp - start;
-			const progress = (elapsed / duration) % 1; // Loop the animation
-
-			const positionPx = progress * (roadWidthPx + busWidthPx) - busWidthPx;
-
-			busIcon.style.transform = `translateX(calc(${positionPx}px)) translateY(-50%) scaleX(-1)`;
-
-			requestAnimationFrame(animate);
-		}
-
-		requestAnimationFrame(animate);
-
 	</script>
 
 </body>

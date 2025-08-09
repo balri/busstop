@@ -81,6 +81,9 @@ app.get('/status', async (req, res) => {
 			}
 		}
 
+		const secretMsg = process.env.SECRET_KEYWORD || null;
+		const acceptableDelay = process.env.ACCEPTABLE_DELAY || 60; // seconds
+
 		if (nextBus) {
 			// Get scheduled time from JSON
 			const scheduledStr = getScheduledTime(nextBus.tripId);
@@ -90,21 +93,34 @@ app.get('/status', async (req, res) => {
 				scheduledTimeUnix = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 			}
 
+			const delay = nextBus.delay || 0;
 			let status = 'on_time';
-			if (nextBus.delay > 60) {
+			let secretMessage = null;
+
+			if (delay > acceptableDelay) {
 				status = 'late';
-			} else if (nextBus.delay < -60) {
+			} else if (delay < -acceptableDelay) {
 				status = 'early';
+				secretMessage = secretMsg;
+			} else {
+				secretMessage = secretMsg;
 			}
 
-			return res.json({
+			const response = {
 				status,
 				scheduledTime: scheduledTimeUnix,
 				estimatedTime: nextBus.arrivalTime,
-			});
+			};
+
+			if (secretMessage) {
+				response.secretMessage = secretMessage;
+			}
+
+			res.json(response);
 		} else {
-			return res.json({ status: 'cancelled' });
+			res.json({ status: 'cancelled' });
 		}
+
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('Error retrieving bus status.');
