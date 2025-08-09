@@ -4,6 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
+const { DateTime } = require('luxon');
 
 // Stub GTFS-RT feed URL
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates'; // Replace with actual URL
@@ -32,13 +33,17 @@ function getScheduledTime(tripId) {
 function scheduledTimeToUnix(startDate, scheduledTime) {
 	// startDate is a string like 'YYYYMMDD' e.g. '20250809'
 	const year = +startDate.substring(0, 4);
-	const month = +startDate.substring(4, 6) - 1; // zero-based month
+	const month = +startDate.substring(4, 6);
 	const day = +startDate.substring(6, 8);
 
 	const [hours, minutes, seconds] = scheduledTime.split(':').map(Number);
 
-	const date = new Date(year, month, day, hours, minutes, seconds);
-	return Math.floor(date.getTime() / 1000);
+	// Use AEST (Australia/Brisbane) timezone
+	const dt = DateTime.fromObject(
+		{ year, month, day, hour: hours, minute: minutes, second: seconds },
+		{ zone: 'Australia/Brisbane' }
+	);
+	return Math.floor(dt.toSeconds());
 }
 
 app.get('/status', async (req, res) => {
