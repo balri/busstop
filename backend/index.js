@@ -99,7 +99,7 @@ app.get('/status', async (req, res) => {
 
 			if (delay > acceptableDelay) {
 				status = 'late';
-			} else if (delay < -acceptableDelay) {
+			} else if (delay < 0) {
 				status = 'early';
 				secretMessage = secretMsg;
 			} else {
@@ -127,33 +127,13 @@ app.get('/status', async (req, res) => {
 	}
 });
 
-app.get('/stats', (req, res) => {
-	db.all(
-		`SELECT status, COUNT(*) as count FROM bus_checks GROUP BY status`,
-		(err, rows) => {
-			if (err) {
-				console.error(err);
-				return res.status(500).send('DB error');
-			}
-
-			// Format result into { early: x, on_time: y, late: z }
-			const stats = { early: 0, on_time: 0, late: 0 };
-			rows.forEach(r => {
-				stats[r.status] = r.count;
-			});
-
-			res.json(stats);
-		}
-	);
-});
-
 app.get('/health', (req, res) => {
 	res.status(200).send('OK');
 });
 
+// Add this above `app.listen(...)`
+app.use(express.static(path.join(__dirname, '../public')));
+
 app.listen(PORT, () => {
 	console.log(`Backend listening on port ${PORT}`);
 });
-
-// Add this above `app.listen(...)`
-app.use(express.static(path.join(__dirname, '../public')));

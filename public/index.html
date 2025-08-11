@@ -5,11 +5,11 @@
 	<meta charset="UTF-8" />
 	<title>Bus Status</title>
 	<link rel="icon" href="/bus.svg" type="image/x-icon" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
 		body {
 			font-family: Arial, sans-serif;
 			text-align: center;
-			padding: 40px;
 			background: linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%);
 			min-height: 100vh;
 			display: flex;
@@ -20,17 +20,22 @@
 			padding: 0;
 		}
 
+		h1 {
+			font-size: 2.2rem;
+			margin-top: 1.2rem;
+			margin-bottom: 0.5rem;
+		}
+
 		.road {
 			position: relative;
-			height: 100px;
+			height: 70px;
 			width: 100vw;
-			/* full viewport width */
+			/* Fill the viewport width */
 			max-width: none;
-			/* remove max-width limit */
-			margin: 0 auto 2rem;
+			/* Remove max-width limit */
+			margin: 0;
+			/* Remove auto margin */
 			background: #555;
-			border-radius: 0;
-			box-shadow: inset 0 0 10px #333;
 			overflow: visible;
 			background-position-y: 20px;
 		}
@@ -41,17 +46,17 @@
 			top: 50%;
 			left: 0;
 			right: 0;
-			height: 6px;
+			height: 5px;
 			background:
 				repeating-linear-gradient(to right,
-					white 0 20px,
-					transparent 20px 40px);
+					white 0 16px,
+					transparent 16px 32px);
 			transform: translateY(-50%);
 			z-index: 1;
 		}
 
 		.bus {
-			font-size: 70px;
+			font-size: 2.8rem;
 			position: absolute;
 			top: 10%;
 			left: 0;
@@ -66,35 +71,25 @@
 			transform: scaleX(-1);
 		}
 
-		/* Animation speeds for bus */
-		@keyframes bus-move {
-			0% {
-				transform: translateX(0) translateY(-50%);
-			}
-
-			50% {
-				transform: translateX(calc(100% - 70px)) translateY(-50%);
-			}
-
-			100% {
-				transform: translateX(0) translateY(-50%);
-			}
-		}
-
 		.status-text {
-			font-size: 1.5rem;
+			font-size: 1.2rem;
 			font-weight: bold;
+			margin-bottom: 0.5rem;
+			word-break: break-word;
+			overflow-wrap: anywhere;
 		}
 
 		.times {
 			font-size: 1rem;
 			color: #444;
 			font-family: monospace;
+			word-break: break-all;
+			overflow-wrap: anywhere;
+			white-space: normal;
 		}
 
 		.bus-parked {
 			animation: none !important;
-			/* Keep bus vertically centered */
 			transform: translateX(0) translateY(-50%) scaleX(-1) !important;
 			transition: none;
 		}
@@ -102,29 +97,59 @@
 		.bus-stop {
 			position: absolute;
 			top: 5%;
-			/* higher than the bus's 10% */
-			left: calc(50% + 35px);
-			font-size: 4rem;
+			left: calc(50% + 1.4rem);
+			font-size: 2.2rem;
 			transition: left 2s ease;
 			z-index: 5;
 			transform: translate(-50%, 0);
-			/* horizontally center, vertical no shift */
 			line-height: 1;
-			/* optional for better bottom alignment */
 			display: flex;
 			align-items: flex-end;
 			height: 1em;
-			/* emoji height */
 		}
 
 		.bus-stop.visible {
-			left: calc(50% + 35px);
+			left: calc(50% + 1.4rem);
 			transform: translate(-50%, -50%);
-			/* proper syntax for centering */
 		}
 
 		.hidden {
 			display: none;
+		}
+
+		@media (max-width: 600px) {
+			h1 {
+				font-size: 1.7rem;
+			}
+
+			.road {
+				height: 80px;
+				width: 100vw;
+				margin-bottom: 2.5rem;
+				margin-top: 1.2rem;
+			}
+
+			.bus {
+				font-size: 3.5rem;
+			}
+
+			.bus-stop {
+				font-size: 2.5rem;
+				left: calc(50% + 1.2rem);
+			}
+
+			.status-text {
+				font-size: 1.3rem;
+			}
+
+			.times {
+				font-size: 1.1rem;
+			}
+
+			body {
+				padding: 0.2rem;
+				gap: 0.2rem;
+			}
 		}
 	</style>
 </head>
@@ -152,9 +177,9 @@
 		let pollTimer = null;
 		let busParked = false;
 
-		const busWidth = busIcon.offsetWidth;
-		const roadWidth = road.offsetWidth;
-		const centreX = (roadWidth - busWidth) / 2;
+		let busWidth = busIcon.offsetWidth;
+		let roadWidth = road.offsetWidth;
+		let centreX = (roadWidth - busWidth) / 2;
 
 		function startPolling() {
 			if (pollTimer) return; // Prevent multiple intervals
@@ -248,7 +273,7 @@
 					stopPolling();
 
 					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
-					timesText.textContent = 'The bus has arrived on time! You keyword is: ' + data.secretMessage;
+					timesText.innerHTML = 'The bus will arrive on, or ahead of, time!<br>Your keyword is: ' + data.secretMessage;
 				} else {
 					// Resume normal animation
 					driveToCentre = false;
@@ -260,14 +285,35 @@
 					if (!animationId) animationId = requestAnimationFrame(animateBus);
 
 					// Update textual info
+					const scheduled = secondsToHHMMSS(data.scheduledTime);
+					const estimated = secondsToHHMMSS(data.estimatedTime);
 					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
-					timesText.textContent = `Scheduled: ${secondsToHHMMSS(data.scheduledTime)} | Estimated: ${secondsToHHMMSS(data.estimatedTime)}`;
+					timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
 				}
 			} catch (e) {
 				console.error(e);
 				statusText.textContent = 'Error loading status';
 			}
 		}
+
+		function recalculateDimensions() {
+			const busRect = busIcon.getBoundingClientRect();
+			busWidth = busRect.width;
+			roadWidth = window.innerWidth; // Always use full viewport width
+			centreX = (roadWidth - busWidth) / 2;
+
+			// Clamp currentX if needed
+			if (currentX > roadWidth - busWidth) {
+				currentX = roadWidth - busWidth;
+				busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
+			}
+		}
+
+		// Listen for window resize
+		window.addEventListener('resize', recalculateDimensions);
+
+		// Call once at startup
+		recalculateDimensions();
 
 		// Initial fetch + interval refresh every 30 seconds
 		startPolling();
