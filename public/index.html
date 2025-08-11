@@ -35,6 +35,7 @@
 			background: #555;
 			overflow: visible;
 			background-position-y: 20px;
+			margin-top: 1.5rem;
 		}
 
 		.road::before {
@@ -93,20 +94,22 @@
 
 		.bus-stop {
 			position: absolute;
-			top: 5%;
-			left: calc(50% + 1.4rem);
+			bottom: 100%;
+			top: auto;
+			left: 100vw;
 			font-size: 2.2rem;
-			transition: left 2s ease;
+			transition: left 2s cubic-bezier(0.77, 0, 0.18, 1);
 			z-index: 5;
 			transform: translate(-50%, 0);
 			line-height: 1;
 			display: flex;
 			align-items: flex-end;
 			height: 1em;
+			margin-bottom: -0.5em;
 		}
 
 		.bus-stop.visible {
-			left: calc(50% + 1.4rem);
+			left: calc(50% + 2rem);
 			transform: translate(-50%, -50%);
 		}
 
