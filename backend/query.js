@@ -6,10 +6,13 @@ const db = new sqlite3.Database(path.join(__dirname, 'busdata.db'));
 
 // Group delays into minute bands and count
 db.all(
-	`SELECT CASE
-			WHEN delay_seconds < 180 THEN '0-3 min'
-			WHEN delay_seconds < 600 THEN '4-10 min'
-			ELSE '+10 min'
+	`SELECT
+		CASE
+			WHEN delay_seconds < -180 THEN 'very early'
+			WHEN delay_seconds < 0 THEN 'early'
+			WHEN delay_seconds < 180 THEN 'on time'
+			WHEN delay_seconds < 600 THEN 'late'
+			ELSE 'very late'
 		END AS minute_band,
         COUNT(*) AS count
     FROM bus_checks

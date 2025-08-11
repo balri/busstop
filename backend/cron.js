@@ -73,7 +73,7 @@ async function checkBus() {
 			let status = 'on_time';
 			if (delay > 300) {
 				status = 'late';
-			} else if (delay < -300) {
+			} else if (delay < 0) {
 				status = 'early';
 			}
 			saveResult(status, delay);

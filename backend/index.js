@@ -7,7 +7,7 @@ const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 const { DateTime } = require('luxon');
 
 // Stub GTFS-RT feed URL
-const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates'; // Replace with actual URL
+const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
 
 // Hard-coded route and stop
 const TARGET_ROUTE_ID = '61-4158';
@@ -58,15 +58,28 @@ app.get('/status', async (req, res) => {
 		const now = Math.floor(Date.now() / 1000); // Current time in seconds
 		let nextBus = null;
 
-		for (const entity of feed.entity) {
-			if (!entity.tripUpdate) continue;
+		const filteredEntities = feed.entity
+			.filter(entity =>
+				entity.tripUpdate &&
+				entity.tripUpdate.trip.routeId === TARGET_ROUTE_ID &&
+				entity.tripUpdate.stopTimeUpdate.some(
+					stopTimeUpdate => stopTimeUpdate.stopId === TARGET_STOP_ID
+				)
+			)
+			.map(entity => ({
+				id: entity.id,
+				tripUpdate: {
+					trip: entity.tripUpdate.trip,
+					stopTimeUpdate: entity.tripUpdate.stopTimeUpdate.filter(
+						stopTimeUpdate => stopTimeUpdate.stopId === TARGET_STOP_ID
+					)
+				}
+			}));
+
+		for (const entity of filteredEntities) {
 			const trip = entity.tripUpdate.trip;
 
-			if (trip.routeId !== TARGET_ROUTE_ID) continue;
-
 			for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate) {
-				if (stopTimeUpdate.stopId !== TARGET_STOP_ID) continue;
-
 				const arrivalTime = stopTimeUpdate.arrival?.time?.toNumber?.() ?? null;
 				if (!arrivalTime || arrivalTime < now) continue; // skip past arrivals
 
@@ -75,7 +88,8 @@ app.get('/status', async (req, res) => {
 						tripId: trip.tripId,
 						startDate: trip.startDate,
 						arrivalTime,
-						delay: stopTimeUpdate.arrival?.delay ?? null
+						delay: stopTimeUpdate.arrival?.delay ?? null,
+						uncertainty: stopTimeUpdate.arrival?.uncertainty ?? 0,
 					};
 				}
 			}
@@ -88,28 +102,31 @@ app.get('/status', async (req, res) => {
 			// Get scheduled time from JSON
 			const scheduledStr = getScheduledTime(nextBus.tripId);
 
-			let scheduledTimeUnix = null;
+			let scheduledTime = null;
 			if (scheduledStr) {
-				scheduledTimeUnix = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
+				scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 			}
 
-			const delay = nextBus.delay || 0;
+			// const delay = nextBus.delay || 0;
 			let status = 'on_time';
 			let secretMessage = null;
 
-			if (delay > acceptableDelay) {
+			const maxArrivalTime = nextBus.arrivalTime + nextBus.uncertainty;
+			const minArrivalTime = nextBus.arrivalTime - nextBus.uncertainty;
+
+			if (minArrivalTime > (scheduledTime + acceptableDelay)) {
 				status = 'late';
-			} else if (delay < 0) {
+			} else if (maxArrivalTime < (scheduledTime - acceptableDelay)) {
 				status = 'early';
-				secretMessage = secretMsg;
 			} else {
 				secretMessage = secretMsg;
 			}
 
 			const response = {
 				status,
-				scheduledTime: scheduledTimeUnix,
+				scheduledTime: scheduledTime,
 				estimatedTime: nextBus.arrivalTime,
+				tripId: nextBus.tripId,
 			};
 
 			if (secretMessage) {
