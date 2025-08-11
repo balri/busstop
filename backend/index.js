@@ -107,7 +107,6 @@ app.get('/status', async (req, res) => {
 				scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 			}
 
-			// const delay = nextBus.delay || 0;
 			let status = 'on_time';
 			let secretMessage = null;
 

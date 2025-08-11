@@ -30,11 +30,8 @@
 			position: relative;
 			height: 70px;
 			width: 100vw;
-			/* Fill the viewport width */
 			max-width: none;
-			/* Remove max-width limit */
 			margin: 0;
-			/* Remove auto margin */
 			background: #555;
 			overflow: visible;
 			background-position-y: 20px;
@@ -262,34 +259,28 @@
 				}
 
 				// Set current status for animation speed
-				currentStatus = data.status;
+				currentStatus = data.status.replace('_', ' ');
+				const scheduled = secondsToHHMMSS(data.scheduledTime);
+				const estimated = secondsToHHMMSS(data.estimatedTime);
+
+				statusText.textContent = currentStatus.toUpperCase();
+				timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
 
 				if (data.secretMessage && !busParked) {
 					// Stop normal animation, start drive to center animation
 					driveToCentre = true;
-					if (!animationId) animationId = requestAnimationFrame(animateBus);
 
 					// Stop polling /status
 					stopPolling();
 
-					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
-					timesText.innerHTML = 'The bus will arrive on, or ahead of, time!<br>Your keyword is: ' + data.secretMessage;
+					timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>Your keyword is: ' + data.secretMessage;
 				} else {
 					// Resume normal animation
 					driveToCentre = false;
 					busIcon.classList.remove('bus-parked');
-
-					// Reset to start position if needed
-					currentX = 0;
-
-					if (!animationId) animationId = requestAnimationFrame(animateBus);
-
-					// Update textual info
-					const scheduled = secondsToHHMMSS(data.scheduledTime);
-					const estimated = secondsToHHMMSS(data.estimatedTime);
-					statusText.textContent = currentStatus.replace('_', ' ').toUpperCase();
-					timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
 				}
+
+				if (!animationId) animationId = requestAnimationFrame(animateBus);
 			} catch (e) {
 				console.error(e);
 				statusText.textContent = 'Error loading status';
