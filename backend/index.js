@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 const { DateTime } = require('luxon');
+const { generatePlotHtml } = require('./plot_delays');
 
 // Stub GTFS-RT feed URL
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
@@ -149,6 +150,18 @@ app.get('/health', (req, res) => {
 
 // Add this above `app.listen(...)`
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve bus_delay_plot.html at /plot
+app.get('/plot', (req, res) => {
+	generatePlotHtml((err, html) => {
+		if (err) {
+			res.status(500).send('Error generating plot');
+		} else {
+			res.set('Content-Type', 'text/html');
+			res.send(html);
+		}
+	});
+});
 
 app.listen(PORT, () => {
 	console.log(`Backend listening on port ${PORT}`);
