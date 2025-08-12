@@ -117,6 +117,11 @@
 			display: none;
 		}
 
+		.bus.no-transition,
+		.bus-stop.no-transition {
+			transition: none !important;
+		}
+
 		@media (max-width: 600px) {
 			h1 {
 				font-size: 1.7rem;
@@ -256,8 +261,8 @@
 				const data = await res.json();
 
 				if (!data.estimatedTime || !data.scheduledTime) {
-					statusText.textContent = 'No upcoming bus found.';
-					timesText.textContent = '';
+					statusText.textContent = 'NO SERVICE';
+					timesText.textContent = 'The service is not currently running. Please check back later.';
 					return;
 				}
 
@@ -286,7 +291,7 @@
 				if (!animationId) animationId = requestAnimationFrame(animateBus);
 			} catch (e) {
 				console.error(e);
-				statusText.textContent = 'Error loading status';
+				statusText.textContent = 'Error loading status. Please try again later.';
 			}
 		}
 
@@ -312,6 +317,18 @@
 		// Initial fetch + interval refresh every 30 seconds
 		startPolling();
 		fetchStatus();
+
+		// On initial render:
+		busIcon.classList.add('no-transition');
+		busStop.classList.add('no-transition');
+
+		// Set positions here based on status...
+
+		// After a short delay, enable transitions for future moves:
+		setTimeout(() => {
+			busIcon.classList.remove('no-transition');
+			busStop.classList.remove('no-transition');
+		}, 100); // 100ms is usually enough
 	</script>
 
 </body>

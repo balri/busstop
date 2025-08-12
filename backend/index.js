@@ -118,6 +118,7 @@ app.get('/status', async (req, res) => {
 				status = 'late';
 			} else if (maxArrivalTime < (scheduledTime - acceptableDelay)) {
 				status = 'early';
+				secretMessage = secretMessage;
 			} else {
 				secretMessage = secretMsg;
 			}
