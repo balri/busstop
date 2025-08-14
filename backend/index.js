@@ -112,7 +112,7 @@ app.get('/status', async (req, res) => {
 
 			if (nextBus.delay > acceptableDelay) {
 				status = 'late';
-			} else if (delat < 0) {
+			} else if (nextBus.delay < 0) {
 				status = 'early';
 				secretMessage = secretMsg;
 			} else {
