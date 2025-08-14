@@ -90,7 +90,6 @@ app.get('/status', async (req, res) => {
 						startDate: trip.startDate,
 						arrivalTime,
 						delay: stopTimeUpdate.arrival?.delay ?? null,
-						uncertainty: stopTimeUpdate.arrival?.uncertainty ?? 0,
 					};
 				}
 			}
@@ -111,14 +110,11 @@ app.get('/status', async (req, res) => {
 			let status = 'on_time';
 			let secretMessage = null;
 
-			const maxArrivalTime = nextBus.arrivalTime + nextBus.uncertainty;
-			const minArrivalTime = nextBus.arrivalTime - nextBus.uncertainty;
-
-			if (minArrivalTime > (scheduledTime + acceptableDelay)) {
+			if (nextBus.delay > acceptableDelay) {
 				status = 'late';
-			} else if (maxArrivalTime < (scheduledTime - acceptableDelay)) {
+			} else if (delat < 0) {
 				status = 'early';
-				secretMessage = secretMessage;
+				secretMessage = secretMsg;
 			} else {
 				secretMessage = secretMsg;
 			}
