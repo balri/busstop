@@ -127,7 +127,6 @@ app.get('/status', async (req, res) => {
 				status,
 				scheduledTime: scheduledTime,
 				estimatedTime: nextBus.arrivalTime,
-				tripId: nextBus.tripId,
 			};
 
 			if (secretMessage) {
@@ -136,7 +135,7 @@ app.get('/status', async (req, res) => {
 
 			res.json(response);
 		} else {
-			res.json({ status: 'cancelled' });
+			res.json({ status: 'no_service' });
 		}
 
 	} catch (err) {

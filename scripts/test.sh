@@ -3,7 +3,7 @@
 PROJECT_DIR=$(dirname "$0")/..
 
 export SECRET_KEYWORD="test"
-export ACCEPTABLE_DELAY=180
+export ACCEPTABLE_DELAY=60
 
 echo "Secret keyword set to $SECRET_KEYWORD"
 echo "Acceptable delay set to $ACCEPTABLE_DELAY seconds"

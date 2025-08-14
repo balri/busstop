@@ -172,6 +172,7 @@
 		const statusText = document.getElementById('statusText');
 		const busIcon = document.getElementById('busIcon');
 		const road = document.querySelector('.road');
+		const busStop = document.getElementById('bus-stop');
 
 		let animationId = null;
 		let driveToCentre = false;
@@ -263,8 +264,16 @@
 				if (!data.estimatedTime || !data.scheduledTime) {
 					statusText.textContent = 'NO SERVICE';
 					timesText.textContent = 'The service is not currently running. Please check back later.';
+
+					// Hide bus and bus stop
+					busIcon.classList.add('hidden');
+					busStop.classList.add('hidden');
 					return;
 				}
+
+				// Show bus and bus stop if service is running
+				busIcon.classList.remove('hidden');
+				// (bus stop will be shown by showBusStop() as needed)
 
 				// Set current status for animation speed
 				currentStatus = data.status.replace('_', ' ');
