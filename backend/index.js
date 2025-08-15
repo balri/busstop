@@ -12,23 +12,23 @@ const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUp
 
 // Hard-coded route and stop
 const TARGET_ROUTE_ID = '61-4158';
-const TARGET_STOP_ID = '3054';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const db = new sqlite3.Database(path.join(__dirname, 'busdata.db'));
+const db = new sqlite3.Database(path.join(__dirname, 'gtfs.db'));
 
-// Load stop_times_filtered.json once at startup
-const stopTimes = JSON.parse(
-	fs.readFileSync(path.join(__dirname, 'stop_times_filtered.json'), 'utf8')
-);
-
-function getScheduledTime(tripId) {
-	const entry = stopTimes.find(
-		(row) => row.trip_id === tripId
-	);
-	return entry ? entry.arrival_time : null;
+function getScheduledTime(tripId, stopId) {
+	return new Promise((resolve, reject) => {
+		db.get(
+			'SELECT arrival_time FROM stop_times WHERE trip_id = ? AND stop_id = ?',
+			[tripId, stopId],
+			(err, row) => {
+				if (err) return reject(err);
+				resolve(row ? row.arrival_time : null);
+			}
+		);
+	});
 }
 
 function scheduledTimeToUnix(startDate, scheduledTime) {
@@ -47,97 +47,136 @@ function scheduledTimeToUnix(startDate, scheduledTime) {
 	return Math.floor(dt.toSeconds());
 }
 
-app.get('/status', async (req, res) => {
-	try {
-		const response = await axios.get(GTFS_RT_URL, {
-			responseType: 'arraybuffer',
-		});
+// Haversine formula to calculate distance in meters
+function haversine(lat1, lon1, lat2, lon2) {
+	const R = 6371000; // Earth radius in meters
+	const toRad = deg => deg * Math.PI / 180;
+	const dLat = toRad(lat2 - lat1);
+	const dLon = toRad(lon2 - lon1);
+	const a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+		Math.sin(dLon / 2) * Math.sin(dLon / 2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	return R * c;
+}
 
-		const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
-			new Uint8Array(response.data)
-		);
-		const now = Math.floor(Date.now() / 1000); // Current time in seconds
-		let nextBus = null;
+app.use(express.json()); // Add this near the top, after express()
 
-		const filteredEntities = feed.entity
-			.filter(entity =>
-				entity.tripUpdate &&
-				entity.tripUpdate.trip.routeId === TARGET_ROUTE_ID &&
-				entity.tripUpdate.stopTimeUpdate.some(
-					stopTimeUpdate => stopTimeUpdate.stopId === TARGET_STOP_ID
-				)
-			)
-			.map(entity => ({
-				id: entity.id,
-				tripUpdate: {
-					trip: entity.tripUpdate.trip,
-					stopTimeUpdate: entity.tripUpdate.stopTimeUpdate.filter(
-						stopTimeUpdate => stopTimeUpdate.stopId === TARGET_STOP_ID
-					)
-				}
-			}));
+app.post('/status', async (req, res) => {
+	const userLat = parseFloat(req.body.lat);
+	const userLon = parseFloat(req.body.lon);
 
-		for (const entity of filteredEntities) {
-			const trip = entity.tripUpdate.trip;
-
-			for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate) {
-				const arrivalTime = stopTimeUpdate.arrival?.time?.toNumber?.() ?? null;
-				if (!arrivalTime || arrivalTime < now) continue; // skip past arrivals
-
-				if (!nextBus || arrivalTime < nextBus.arrivalTime) {
-					nextBus = {
-						tripId: trip.tripId,
-						startDate: trip.startDate,
-						arrivalTime,
-						delay: stopTimeUpdate.arrival?.delay ?? null,
-					};
-				}
-			}
-		}
-
-		const secretMsg = process.env.SECRET_KEYWORD || null;
-		const acceptableDelay = process.env.ACCEPTABLE_DELAY || 60; // seconds
-
-		if (nextBus) {
-			// Get scheduled time from JSON
-			const scheduledStr = getScheduledTime(nextBus.tripId);
-
-			let scheduledTime = null;
-			if (scheduledStr) {
-				scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
-			}
-
-			let status = 'on_time';
-			let secretMessage = null;
-
-			if (nextBus.delay > acceptableDelay) {
-				status = 'late';
-			} else if (nextBus.delay < 0) {
-				status = 'early';
-				secretMessage = secretMsg;
-			} else {
-				secretMessage = secretMsg;
-			}
-
-			const response = {
-				status,
-				scheduledTime: scheduledTime,
-				estimatedTime: nextBus.arrivalTime,
-			};
-
-			if (secretMessage) {
-				response.secretMessage = secretMessage;
-			}
-
-			res.json(response);
-		} else {
-			res.json({ status: 'no_service' });
-		}
-
-	} catch (err) {
-		console.error(err);
-		res.status(500).send('Error retrieving bus status.');
+	if (isNaN(userLat) || isNaN(userLon)) {
+		return res.status(400).json({ error: 'Invalid coordinates' });
 	}
+
+	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err, stops) => {
+		if (err) return res.status(500).json({ error: 'DB error' });
+
+		let nearest = null;
+		let minDist = Infinity;
+		for (const stop of stops) {
+			const dist = haversine(userLat, userLon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
+			if (dist < minDist) {
+				minDist = dist;
+				nearest = stop;
+			}
+		}
+
+		if (!nearest || minDist > 500) {
+			return res.status(404).json({ error: 'No bus stop within 100m' });
+		}
+
+		const stopId = nearest.stop_id;
+		try {
+			const response = await axios.get(GTFS_RT_URL, {
+				responseType: 'arraybuffer',
+			});
+			const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
+				new Uint8Array(response.data)
+			);
+			const now = Math.floor(Date.now() / 1000);
+			let nextBus = null;
+
+			const filteredEntities = feed.entity
+				.filter(entity =>
+					entity.tripUpdate &&
+					entity.tripUpdate.trip.routeId === TARGET_ROUTE_ID &&
+					entity.tripUpdate.stopTimeUpdate.some(
+						stopTimeUpdate => stopTimeUpdate.stopId === stopId
+					)
+				)
+				.map(entity => ({
+					id: entity.id,
+					tripUpdate: {
+						trip: entity.tripUpdate.trip,
+						stopTimeUpdate: entity.tripUpdate.stopTimeUpdate.filter(
+							stopTimeUpdate => stopTimeUpdate.stopId === stopId
+						)
+					}
+				}));
+
+			for (const entity of filteredEntities) {
+				const trip = entity.tripUpdate.trip;
+
+				for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate) {
+					const arrivalTime = stopTimeUpdate.arrival?.time?.toNumber?.() ?? null;
+					if (!arrivalTime || arrivalTime < now) continue;
+					if (!nextBus || arrivalTime < nextBus.arrivalTime) {
+						nextBus = {
+							tripId: trip.tripId,
+							startDate: trip.startDate,
+							arrivalTime,
+							delay: stopTimeUpdate.arrival?.delay ?? null,
+						};
+					}
+				}
+			}
+
+			const secretMsg = process.env.SECRET_KEYWORD || null;
+			const acceptableDelay = process.env.ACCEPTABLE_DELAY || 60; // seconds
+
+			if (nextBus) {
+				getScheduledTime(nextBus.tripId, stopId)
+					.then(scheduledStr => {
+						let scheduledTime = null;
+						if (scheduledStr) {
+							scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
+						}
+						let status = 'on_time';
+						let secretMessage = null;
+						if (nextBus.delay > acceptableDelay) {
+							status = 'late';
+						} else if (nextBus.delay < -acceptableDelay) {
+							status = 'early';
+							// secretMessage = secretMsg;
+						} else {
+							secretMessage = secretMsg;
+						}
+
+						const response = {
+							status,
+							scheduledTime,
+							estimatedTime: nextBus.arrivalTime,
+							delay: nextBus.delay,
+							stopName: nearest.stop_name,
+						};
+
+						if (secretMessage) {
+							response.secretMessage = secretMessage;
+						}
+
+						return res.json(response);
+					})
+					.catch(() => res.status(500).json({ error: 'DB error' }));
+			} else {
+				return res.json({ status: 'no_service' });
+			}
+		} catch (e) {
+			return res.status(500).json({ error: 'Failed to fetch GTFS-RT feed' });
+		}
+	});
 });
 
 app.get('/health', (req, res) => {

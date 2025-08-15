@@ -164,7 +164,7 @@
 </head>
 
 <body>
-	<h1>Bus Status</h1>
+	<h1 id="stopName">Bus Status</h1>
 	<div class="road">
 		<div id="busIcon" class="bus">🚌</div>
 		<div id="bus-stop" class="bus-stop hidden">🚏</div>
@@ -177,6 +177,8 @@
 		const busIcon = document.getElementById('busIcon');
 		const road = document.querySelector('.road');
 		const busStop = document.getElementById('bus-stop');
+		const timesText = document.getElementById('timesText');
+		const stopName = document.getElementById('stopName');
 
 		let animationId = null;
 		let driveToCentre = false;
@@ -208,21 +210,11 @@
 			return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 		}
 
-		function getAnimationDuration(status) {
-			switch (status) {
-				case 'early': return 3000;   // 3 seconds
-				case 'on_time': return 6000; // 6 seconds
-				case 'late': return 9000;    // 9 seconds
-				default: return 6000;
-			}
-		}
-
 		function animateBus(timestamp) {
-			if (busParked) return; // 🔒 once parked, stop completely
+			if (busParked) return;
 
 			if (!driveToCentre) {
-				// 🚍 normal loop
-				const speed = 100; // px/sec
+				const speed = 100;
 				if (!animateBus.lastTimestamp) animateBus.lastTimestamp = timestamp;
 				const delta = timestamp - animateBus.lastTimestamp;
 				animateBus.lastTimestamp = timestamp;
@@ -232,7 +224,6 @@
 
 				animationId = requestAnimationFrame(animateBus);
 			} else {
-				// 🅿 drive to centre
 				const distance = centreX - currentX;
 				if (Math.abs(distance) < 1) {
 					currentX = centreX;
@@ -241,17 +232,15 @@
 					cancelAnimationFrame(animationId);
 					animationId = null;
 				} else {
-					currentX += distance * 0.05; // easing
+					currentX += distance * 0.05;
 					busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
 					animationId = requestAnimationFrame(animateBus);
 				}
-
 				showBusStop();
 			}
 		}
 
 		function showBusStop() {
-			const busStop = document.getElementById('bus-stop');
 			busStop.classList.remove('hidden');
 			requestAnimationFrame(() => {
 				busStop.classList.add('visible');
@@ -261,85 +250,89 @@
 		animationId = requestAnimationFrame(animateBus);
 
 		async function fetchStatus() {
-			try {
-				const res = await fetch('/status');
-				const data = await res.json();
+			navigator.geolocation.getCurrentPosition(
+				pos => {
+					const { latitude, longitude } = pos.coords;
+					fetch('/status', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ lat: latitude, lon: longitude })
+					})
+						.then(res => res.json())
+						.then(data => {
+							if (data.stopName) {
+								stopName.textContent = data.stopName;
+							} else {
+								stopName.textContent = 'Bus Status';
+							}
 
-				if (!data.estimatedTime || !data.scheduledTime) {
-					statusText.textContent = 'NO SERVICE';
-					timesText.textContent = 'The service is not currently running. Please check back later.';
+							if (!data.estimatedTime || !data.scheduledTime || data.status === 'no_service') {
+								statusText.textContent = 'NO SERVICE';
+								timesText.textContent = 'The service is not currently running. Please check back later.';
 
-					// Hide bus and bus stop
-					busIcon.classList.add('hidden');
-					busStop.classList.add('hidden');
-					return;
+								busIcon.classList.add('hidden');
+								busStop.classList.add('hidden');
+								return;
+							}
+
+							busIcon.classList.remove('hidden');
+
+							currentStatus = data.status.replace('_', ' ');
+							const scheduled = secondsToHHMMSS(data.scheduledTime);
+							const estimated = secondsToHHMMSS(data.estimatedTime);
+
+							statusText.textContent = currentStatus.toUpperCase();
+							timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
+
+							if (data.secretMessage && !busParked) {
+								driveToCentre = true;
+
+								stopPolling();
+
+								timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>You keyword is: ' + data.secretMessage;
+							} else {
+								driveToCentre = false;
+								busIcon.classList.remove('bus-parked');
+							}
+
+							if (!animationId) animationId = requestAnimationFrame(animateBus);
+						})
+						.catch(e => {
+							console.error(e);
+							statusText.textContent = 'Error loading status. Please try again later.';
+						});
+				},
+				err => {
+					alert('Could not get your location');
 				}
-
-				// Show bus and bus stop if service is running
-				busIcon.classList.remove('hidden');
-				// (bus stop will be shown by showBusStop() as needed)
-
-				// Set current status for animation speed
-				currentStatus = data.status.replace('_', ' ');
-				const scheduled = secondsToHHMMSS(data.scheduledTime);
-				const estimated = secondsToHHMMSS(data.estimatedTime);
-
-				statusText.textContent = currentStatus.toUpperCase();
-				timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
-
-				if (data.secretMessage && !busParked) {
-					// Stop normal animation, start drive to center animation
-					driveToCentre = true;
-
-					// Stop polling /status
-					stopPolling();
-
-					timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>Your keyword is: ' + data.secretMessage;
-				} else {
-					// Resume normal animation
-					driveToCentre = false;
-					busIcon.classList.remove('bus-parked');
-				}
-
-				if (!animationId) animationId = requestAnimationFrame(animateBus);
-			} catch (e) {
-				console.error(e);
-				statusText.textContent = 'Error loading status. Please try again later.';
-			}
+			);
 		}
 
 		function recalculateDimensions() {
 			const busRect = busIcon.getBoundingClientRect();
 			busWidth = busRect.width;
-			roadWidth = window.innerWidth; // Always use full viewport width
+			roadWidth = window.innerWidth;
 			centreX = (roadWidth - busWidth) / 2;
 
-			// Clamp currentX if needed
 			if (currentX > roadWidth - busWidth) {
 				currentX = roadWidth - busWidth;
 				busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
 			}
 		}
 
-		// Listen for window resize
 		window.addEventListener('resize', recalculateDimensions);
-
-		// Call once at startup
 		recalculateDimensions();
 
-		// Initial fetch + interval refresh every 30 seconds
 		startPolling();
 		fetchStatus();
 
 		// On initial render:
 		busIcon.classList.add('no-transition');
 		busStop.classList.add('no-transition');
-
-		// After a short delay, enable transitions for future moves:
 		setTimeout(() => {
 			busIcon.classList.remove('no-transition');
 			busStop.classList.remove('no-transition');
-		}, 100); // 100ms is usually enough
+		}, 100);
 	</script>
 
 </body>
