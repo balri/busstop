@@ -107,7 +107,17 @@ app.post('/status', async (req, res) => {
 		}
 
 		if (!nearest || minDist > minDistance) {
-			return res.status(404).json({ error: `No bus stop within ${minDistance}m` });
+			return res.status(404).json({
+				error: `No bus stop within ${minDistance}m`,
+				nearest: nearest
+					? {
+						stop_name: nearest.stop_name,
+						stop_lat: nearest.stop_lat,
+						stop_lon: nearest.stop_lon,
+						distance: Math.round(minDist)
+					}
+					: null
+			});
 		}
 
 		const stopId = nearest.stop_id;

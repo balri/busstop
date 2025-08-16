@@ -271,12 +271,26 @@
 					})
 						.then(res => {
 							if (res.status === 404) {
-								stopName.textContent = 'No Nearby Bus Stop';
-								statusText.textContent = 'Please go to a bus stop and try again.';
-								timesText.textContent = '';
-								busIcon.classList.add('hidden');
-								busStop.classList.add('hidden');
-								stopPolling();
+								res.json().then(data => {
+									if (data.nearest) {
+										const { stop_name, stop_lat, stop_lon, distance } = data.nearest;
+										stopName.textContent = 'No Nearby Bus Stop';
+										statusText.innerHTML = `
+											Closest stop: <b>${stop_name}</b><br>
+											Distance: <b>${distance}m</b><br>
+											<a href="https://www.google.com/maps/search/?api=1&query=${stop_lat},${stop_lon}" target="_blank">
+												View in Google Maps
+											</a>
+										`;
+									} else {
+										stopName.textContent = 'No Nearby Bus Stop';
+										statusText.textContent = 'Please go to a bus stop and try again.';
+									}
+									timesText.textContent = '';
+									busIcon.classList.add('hidden');
+									busStop.classList.add('hidden');
+									stopPolling();
+								});
 								return null;
 							}
 							if (res.status === 403) {
