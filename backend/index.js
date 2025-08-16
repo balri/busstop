@@ -7,7 +7,7 @@ const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 const { DateTime } = require('luxon');
 const { generatePlotHtml } = require('./plot_delays');
 const crypto = require('crypto');
-const tokens = new Set();
+const tokens = new Map(); // token -> expiry timestamp
 
 // Stub GTFS-RT feed URL
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
@@ -76,10 +76,10 @@ app.use(express.json()); // Add this near the top, after express()
 
 app.post('/status', async (req, res) => {
 	const { loc, token } = req.body;
-	if (!tokens.has(token)) {
-		return res.status(403).json({ error: 'Invalid or missing token' });
+	const expiry = tokens.get(token);
+	if (!expiry || expiry < Date.now()) {
+		return res.status(403).json({ error: 'Invalid or expired token' });
 	}
-	tokens.delete(token);
 
 	let userLat, userLon;
 	try {
@@ -156,7 +156,7 @@ app.post('/status', async (req, res) => {
 				}
 			}
 
-			const secretMsg = process.env.SECRET_KEYWORD || null;
+			const secretKeyword = process.env.SECRET_KEYWORD || null;
 			const acceptableDelay = process.env.ACCEPTABLE_DELAY || 60; // seconds
 
 			if (nextBus) {
@@ -167,14 +167,14 @@ app.post('/status', async (req, res) => {
 							scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 						}
 						let status = 'on_time';
-						let secretMessage = null;
+						let keyword = null;
 						if (nextBus.delay > acceptableDelay) {
 							status = 'late';
 						} else if (nextBus.delay < -acceptableDelay) {
 							status = 'early';
-							// secretMessage = secretMsg;
+							// keyword = secretKeyword;
 						} else {
-							secretMessage = secretMsg;
+							keyword = secretKeyword;
 						}
 
 						const response = {
@@ -185,8 +185,8 @@ app.post('/status', async (req, res) => {
 							stopName: nearest.stop_name,
 						};
 
-						if (secretMessage) {
-							response.secretMessage = secretMessage;
+						if (keyword) {
+							response.keyword = keyword;
 						}
 
 						return res.json(response);
@@ -223,13 +223,20 @@ app.get('/plot', (req, res) => {
 // Serve index.html with a token
 app.get('/', (req, res) => {
 	const token = crypto.randomBytes(16).toString('hex');
-	tokens.add(token);
+	tokens.set(token, Date.now() + 5 * 60 * 1000); // valid for 5 minutes
 	fs.readFile(path.join(__dirname, '../public/index.template.html'), 'utf8', (err, html) => {
 		if (err) return res.status(500).send('Error loading page');
 		const htmlWithToken = html.replace('</head>', `<script>window.BUS_TOKEN="${token}"</script></head>`);
 		res.send(htmlWithToken);
 	});
 });
+
+setInterval(() => {
+	const now = Date.now();
+	for (const [token, expiry] of tokens.entries()) {
+		if (expiry < now) tokens.delete(token);
+	}
+}, 60 * 1000); // every minute
 
 app.listen(PORT, () => {
 	console.log(`Backend listening on port ${PORT}`);

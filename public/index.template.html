@@ -269,8 +269,30 @@
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ loc: encryptedLoc, token: window.BUS_TOKEN })
 					})
-						.then(res => res.json())
+						.then(res => {
+							if (res.status === 404) {
+								stopName.textContent = 'No Nearby Bus Stop';
+								statusText.textContent = 'Please go to a bus stop and try again.';
+								timesText.textContent = '';
+								busIcon.classList.add('hidden');
+								busStop.classList.add('hidden');
+								stopPolling();
+								return null;
+							}
+							if (res.status === 403) {
+								stopName.textContent = 'Session Expired';
+								statusText.textContent = 'Please refresh the page to continue.';
+								timesText.textContent = '';
+								busIcon.classList.add('hidden');
+								busStop.classList.add('hidden');
+								stopPolling();
+								return null;
+							}
+							return res.json();
+						})
 						.then(data => {
+							if (!data) return;
+
 							if (data.stopName) {
 								stopName.textContent = data.stopName;
 							} else {
@@ -295,12 +317,12 @@
 							statusText.textContent = currentStatus.toUpperCase();
 							timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
 
-							if (data.secretMessage && !busParked) {
+							if (data.keyword && !busParked) {
 								driveToCentre = true;
 
 								stopPolling();
 
-								timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>You keyword is: ' + data.secretMessage;
+								timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>Your keyword is: ' + data.keyword;
 							} else {
 								driveToCentre = false;
 								busIcon.classList.remove('bus-parked');
