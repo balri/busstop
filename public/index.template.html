@@ -7,6 +7,11 @@
 	<link rel="icon" href="/bus.svg" type="image/x-icon" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
+		html,
+		body {
+			overflow-x: hidden;
+		}
+
 		body {
 			font-family: Arial, sans-serif;
 			text-align: center;
@@ -29,8 +34,8 @@
 		.road {
 			position: relative;
 			height: 70px;
-			width: 100vw;
-			max-width: none;
+			width: 100%;
+			max-width: 100vw;
 			margin: 0;
 			background: #555;
 			overflow: visible;
@@ -122,6 +127,27 @@
 			transition: none !important;
 		}
 
+		#help-link {
+			position: fixed;
+			bottom: 1.2rem;
+			right: 1.2rem;
+			background: #fff;
+			color: #0074d9;
+			border-radius: 0.5em;
+			text-decoration: none;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+			opacity: 0.85;
+			transition: opacity 0.2s;
+			z-index: 1000;
+			font-size: 0.9rem;
+			padding: 0.4rem 0.8rem;
+		}
+
+		#help-link:hover {
+			opacity: 1;
+			background: #e6f7ff;
+		}
+
 		@media (max-width: 600px) {
 			h1 {
 				font-size: 1.7rem;
@@ -171,7 +197,8 @@
 	</div>
 	<div class="status-text" id="statusText">Loading...</div>
 	<div class="times" id="timesText"></div>
-
+	<a href="https://www.geocaching.com/account/messagecenter?recipientId=6d39c562-596e-43d8-9bb0-6285f731f563"
+		id="help-link" target="_blank">Help</a>
 	<script>
 		const statusText = document.getElementById('statusText');
 		const busIcon = document.getElementById('busIcon');
@@ -350,7 +377,13 @@
 						});
 				},
 				err => {
-					alert('Could not get your location');
+					stopName.textContent = 'Could not get your location';
+					statusText.textContent = 'Location access is required to find nearby bus stops.';
+					timesText.textContent = '';
+					busIcon.classList.add('hidden');
+					busStop.classList.add('hidden');
+					stopPolling();
+
 				}
 			);
 		}
