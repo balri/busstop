@@ -6,6 +6,8 @@ const fs = require('fs');
 const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 const { DateTime } = require('luxon');
 const { generatePlotHtml } = require('./plot_delays');
+const crypto = require('crypto');
+const tokens = new Set();
 
 // Stub GTFS-RT feed URL
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
@@ -61,15 +63,35 @@ function haversine(lat1, lon1, lat2, lon2) {
 	return R * c;
 }
 
+function xorDecrypt(encoded, key) {
+	const text = Buffer.from(encoded, 'base64').toString('binary');
+	let result = '';
+	for (let i = 0; i < text.length; i++) {
+		result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+	}
+	return result;
+}
+
 app.use(express.json()); // Add this near the top, after express()
 
 app.post('/status', async (req, res) => {
-	const userLat = parseFloat(req.body.lat);
-	const userLon = parseFloat(req.body.lon);
+	const { loc, token } = req.body;
+	if (!tokens.has(token)) {
+		return res.status(403).json({ error: 'Invalid or missing token' });
+	}
+	tokens.delete(token);
 
-	if (isNaN(userLat) || isNaN(userLon)) {
+	let userLat, userLon;
+	try {
+		const decrypted = xorDecrypt(loc, token);
+		const parsed = JSON.parse(decrypted);
+		userLat = parseFloat(parsed.lat);
+		userLon = parseFloat(parsed.lon);
+	} catch (e) {
 		return res.status(400).json({ error: 'Invalid coordinates' });
 	}
+
+	const minDistance = process.env.MIN_DISTANCE || 100; // meters
 
 	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err, stops) => {
 		if (err) return res.status(500).json({ error: 'DB error' });
@@ -84,8 +106,8 @@ app.post('/status', async (req, res) => {
 			}
 		}
 
-		if (!nearest || minDist > 500) {
-			return res.status(404).json({ error: 'No bus stop within 100m' });
+		if (!nearest || minDist > minDistance) {
+			return res.status(404).json({ error: `No bus stop within ${minDistance}m` });
 		}
 
 		const stopId = nearest.stop_id;
@@ -195,6 +217,17 @@ app.get('/plot', (req, res) => {
 			res.set('Content-Type', 'text/html');
 			res.send(html);
 		}
+	});
+});
+
+// Serve index.html with a token
+app.get('/', (req, res) => {
+	const token = crypto.randomBytes(16).toString('hex');
+	tokens.add(token);
+	fs.readFile(path.join(__dirname, '../public/index.template.html'), 'utf8', (err, html) => {
+		if (err) return res.status(500).send('Error loading page');
+		const htmlWithToken = html.replace('</head>', `<script>window.BUS_TOKEN="${token}"</script></head>`);
+		res.send(htmlWithToken);
 	});
 });
 
