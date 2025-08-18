@@ -1,9 +1,11 @@
 const crypto = require('crypto');
 const tokens = new Map();
 
+const tokenExpiry = process.env.TOKEN_EXPIRY_MS || 15 * 60 * 1000; // 15 minutes
+
 function generateToken() {
 	const token = crypto.randomBytes(16).toString('hex');
-	tokens.set(token, Date.now() + 5 * 60 * 1000);
+	tokens.set(token, Date.now() + tokenExpiry);
 	return token;
 }
 

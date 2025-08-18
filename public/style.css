@@ -47,18 +47,18 @@ h1 {
 			transparent 16px 32px);
 	transform: translateY(-50%);
 	z-index: 1;
+	background-position-x: var(--road-bg-x, 0);
 }
 
 .bus {
 	font-size: 2.8rem;
 	position: absolute;
 	top: 10%;
-	left: 0;
-	transform: translateY(-50%);
-	will-change: transform, color;
-	transition: color 0.3s ease;
+	left: 48%;
 	z-index: 10;
 	transform-origin: center;
+	transform: translateX(0) translateY(-50%) scaleX(-1) !important;
+	transition: none;
 }
 
 .flip-horizontal {
@@ -82,19 +82,12 @@ h1 {
 	white-space: normal;
 }
 
-.bus-parked {
-	animation: none !important;
-	transform: translateX(0) translateY(-50%) scaleX(-1) !important;
-	transition: none;
-}
-
 .bus-stop {
 	position: absolute;
 	bottom: 100%;
 	top: auto;
 	left: 100vw;
 	font-size: 2.2rem;
-	transition: left 2s cubic-bezier(0.77, 0, 0.18, 1);
 	z-index: 5;
 	transform: translate(-50%, 0);
 	line-height: 1;
@@ -113,7 +106,6 @@ h1 {
 	display: none;
 }
 
-.bus.no-transition,
 .bus-stop.no-transition {
 	transition: none !important;
 }
@@ -157,11 +149,16 @@ h1 {
 
 	.bus {
 		font-size: 3.5rem;
+		left: 43%;
 	}
 
 	.bus-stop {
 		font-size: 2.5rem;
-		left: calc(50% + 1.2rem);
+	}
+
+	.bus-stop.visible {
+		left: calc(55% + 1.2rem);
+		/* Match bus left + offset */
 	}
 
 	.status-text {

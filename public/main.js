@@ -5,18 +5,13 @@ const busStop = document.getElementById('bus-stop');
 const timesText = document.getElementById('timesText');
 const stopName = document.getElementById('stopName');
 
-let animationId = null;
-let driveToCentre = false;
-let currentX = 0;
 let currentStatus = null;
-let start = null;
-let duration = 6000; // 6 seconds for full left to right
 let pollTimer = null;
-let busParked = false;
 
-let busWidth = busIcon.offsetWidth;
-let roadWidth = road.offsetWidth;
-let centreX = (roadWidth - busWidth) / 2;
+let roadBgPos = 0;
+let roadMoving = true;
+let roadAnimId = null;
+const roadSpeed = 1.2; // Adjust for desired speed
 
 function startPolling() {
 	if (pollTimer) return; // Prevent multiple intervals
@@ -35,41 +30,29 @@ function secondsToHHMMSS(seconds) {
 	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function animateBus(timestamp) {
-	if (busParked) return;
-
-	if (!driveToCentre) {
-		const speed = 100;
-		if (!animateBus.lastTimestamp) animateBus.lastTimestamp = timestamp;
-		const delta = timestamp - animateBus.lastTimestamp;
-		animateBus.lastTimestamp = timestamp;
-
-		currentX = (currentX + (speed * delta) / 1000) % (roadWidth - busWidth);
-		busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
-
-		animationId = requestAnimationFrame(animateBus);
-	} else {
-		const distance = centreX - currentX;
-		if (Math.abs(distance) < 1) {
-			currentX = centreX;
-			busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
-			busParked = true;
-			cancelAnimationFrame(animationId);
-			animationId = null;
-		} else {
-			currentX += distance * 0.05;
-			busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
-			animationId = requestAnimationFrame(animateBus);
-		}
-		showBusStop();
-	}
+function animateRoad() {
+	if (!roadMoving) return;
+	roadBgPos -= roadSpeed;
+	road.style.setProperty('--road-bg-x', `${roadBgPos}px`);
+	roadAnimId = requestAnimationFrame(animateRoad);
 }
 
-function showBusStop() {
+function showBusStopAndStopRoad() {
+	setBusStopTransition(roadSpeed);
+	busStop.classList.remove('visible');
 	busStop.classList.remove('hidden');
-	requestAnimationFrame(() => {
+	setTimeout(() => {
 		busStop.classList.add('visible');
-	});
+	}, 20);
+	busStop.addEventListener('transitionend', stopRoad, { once: true });
+}
+
+function stopRoad() {
+	roadMoving = false;
+	if (roadAnimId) {
+		cancelAnimationFrame(roadAnimId);
+		roadAnimId = null;
+	}
 }
 
 function xorEncrypt(text, key) {
@@ -79,8 +62,6 @@ function xorEncrypt(text, key) {
 	}
 	return btoa(result); // base64 encode for safe transport
 }
-
-animationId = requestAnimationFrame(animateBus);
 
 async function fetchStatus() {
 	navigator.geolocation.getCurrentPosition(
@@ -98,12 +79,12 @@ async function fetchStatus() {
 					if (res.status === 404) {
 						res.json().then(data => {
 							if (data.nearest) {
-								const { stop_name, stop_lat, stop_lon, distance } = data.nearest;
+								const { stopName, stopLat, stopLon, distance } = data.nearest;
 								stopName.textContent = 'No Nearby Bus Stop';
 								statusText.innerHTML = `
-											Closest stop: <b>${stop_name}</b><br>
+											Closest stop: <b>${stopName}</b><br>
 											Distance: <b>${distance}m</b><br>
-											<a href="https://www.google.com/maps/search/?api=1&query=${stop_lat},${stop_lon}" target="_blank">
+											<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
 												View in Google Maps
 											</a>
 										`;
@@ -115,6 +96,7 @@ async function fetchStatus() {
 							busIcon.classList.add('hidden');
 							busStop.classList.add('hidden');
 							stopPolling();
+							stopRoad();
 						});
 						return null;
 					}
@@ -125,6 +107,7 @@ async function fetchStatus() {
 						busIcon.classList.add('hidden');
 						busStop.classList.add('hidden');
 						stopPolling();
+						stopRoad();
 						return null;
 					}
 					return res.json();
@@ -156,18 +139,11 @@ async function fetchStatus() {
 					statusText.textContent = currentStatus.toUpperCase();
 					timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
 
-					if (data.keyword && !busParked) {
-						driveToCentre = true;
-
+					if (data.keyword) {
 						stopPolling();
-
 						timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>Your keyword is: ' + data.keyword;
-					} else {
-						driveToCentre = false;
-						busIcon.classList.remove('bus-parked');
+						showBusStopAndStopRoad();
 					}
-
-					if (!animationId) animationId = requestAnimationFrame(animateBus);
 				})
 				.catch(e => {
 					console.error(e);
@@ -181,33 +157,39 @@ async function fetchStatus() {
 			busIcon.classList.add('hidden');
 			busStop.classList.add('hidden');
 			stopPolling();
-
+			stopRoad();
 		}
 	);
 }
 
-function recalculateDimensions() {
-	const busRect = busIcon.getBoundingClientRect();
-	busWidth = busRect.width;
-	roadWidth = window.innerWidth;
-	centreX = (roadWidth - busWidth) / 2;
+function setBusStopTransition(roadSpeed) {
+	const vw = window.innerWidth;
+	// Get the offset in px (2rem or 1.2rem depending on screen size)
+	const style = getComputedStyle(document.documentElement);
+	const rem = parseFloat(style.fontSize);
+	const offsetPx = window.matchMedia('(max-width: 600px)').matches ? 1.2 * rem : 2 * rem;
 
-	if (currentX > roadWidth - busWidth) {
-		currentX = roadWidth - busWidth;
-		busIcon.style.transform = `translateX(${currentX}px) translateY(-50%) scaleX(-1)`;
-	}
+	const stopFinal = vw / 2 + offsetPx;
+	const distance = vw - stopFinal;
+	const frames = distance / roadSpeed;
+	let duration = frames / 60; // 60fps
+
+	duration *= 0.5; // Slow down a bit for smoother transition
+
+	busStop.style.transition = `left ${duration}s linear`;
 }
 
-window.addEventListener('resize', recalculateDimensions);
-recalculateDimensions();
+// Start the road animation when the page loads
+roadMoving = true;
+animateRoad();
+
+window.addEventListener('resize', () => setBusStopTransition(roadSpeed));
 
 startPolling();
 fetchStatus();
 
 // On initial render:
-busIcon.classList.add('no-transition');
 busStop.classList.add('no-transition');
 setTimeout(() => {
-	busIcon.classList.remove('no-transition');
 	busStop.classList.remove('no-transition');
 }, 100);

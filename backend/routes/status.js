@@ -45,9 +45,9 @@ router.post('/status', async (req, res) => {
 				error: `No bus stop within ${minDistance}m`,
 				nearest: nearest
 					? {
-						stop_name: nearest.stop_name,
-						stop_lat: nearest.stop_lat,
-						stop_lon: nearest.stop_lon,
+						stopName: nearest.stop_name,
+						stopLat: nearest.stop_lat,
+						stopLon: nearest.stop_lon,
 						distance: Math.round(minDist)
 					}
 					: null
@@ -122,7 +122,7 @@ router.post('/status', async (req, res) => {
 							scheduledTime,
 							estimatedTime: nextBus.arrivalTime,
 							delay: nextBus.delay,
-							stopName: nearest.stop_name,
+							stopName: nearest.stopName,
 						};
 						if (keyword) response.keyword = keyword;
 						return res.json(response);
