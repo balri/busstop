@@ -36,7 +36,13 @@ router.post('/status', async (req, res) => {
 			const dist = haversine(userLat, userLon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
 			if (dist < minDist) {
 				minDist = dist;
-				nearest = stop;
+				nearest = {
+					stopId: stop.stop_id,
+					stopName: stop.stop_name,
+					stopLat: stop.stop_lat,
+					stopLon: stop.stop_lon,
+					distance: Math.round(dist)
+				};
 			}
 		}
 
@@ -44,17 +50,12 @@ router.post('/status', async (req, res) => {
 			return res.status(404).json({
 				error: `No bus stop within ${minDistance}m`,
 				nearest: nearest
-					? {
-						stopName: nearest.stop_name,
-						stopLat: nearest.stop_lat,
-						stopLon: nearest.stop_lon,
-						distance: Math.round(minDist)
-					}
+					? nearest
 					: null
 			});
 		}
 
-		const stopId = nearest.stop_id;
+		const stopId = nearest.stopId;
 		try {
 			const response = await axios.get(GTFS_RT_URL, { responseType: 'arraybuffer' });
 			const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(

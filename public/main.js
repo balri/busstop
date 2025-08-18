@@ -3,7 +3,7 @@ const busIcon = document.getElementById('busIcon');
 const road = document.querySelector('.road');
 const busStop = document.getElementById('bus-stop');
 const timesText = document.getElementById('timesText');
-const stopName = document.getElementById('stopName');
+const busStopName = document.getElementById('busStopName');
 
 let currentStatus = null;
 let pollTimer = null;
@@ -80,7 +80,7 @@ async function fetchStatus() {
 						res.json().then(data => {
 							if (data.nearest) {
 								const { stopName, stopLat, stopLon, distance } = data.nearest;
-								stopName.textContent = 'No Nearby Bus Stop';
+								busStopName.textContent = 'No Nearby Bus Stop';
 								statusText.innerHTML = `
 											Closest stop: <b>${stopName}</b><br>
 											Distance: <b>${distance}m</b><br>
@@ -89,7 +89,7 @@ async function fetchStatus() {
 											</a>
 										`;
 							} else {
-								stopName.textContent = 'No Nearby Bus Stop';
+								busStopName.textContent = 'No Nearby Bus Stop';
 								statusText.textContent = 'Please go to a bus stop and try again.';
 							}
 							timesText.textContent = '';
@@ -101,7 +101,7 @@ async function fetchStatus() {
 						return null;
 					}
 					if (res.status === 403) {
-						stopName.textContent = 'Session Expired';
+						busStopName.textContent = 'Session Expired';
 						statusText.textContent = 'Please refresh the page to continue.';
 						timesText.textContent = '';
 						busIcon.classList.add('hidden');
@@ -116,9 +116,9 @@ async function fetchStatus() {
 					if (!data) return;
 
 					if (data.stopName) {
-						stopName.textContent = data.stopName;
+						busStopName.textContent = data.stopName;
 					} else {
-						stopName.textContent = 'Bus Status';
+						busStopName.textContent = 'Bus Status';
 					}
 
 					if (!data.estimatedTime || !data.scheduledTime || data.status === 'no_service') {
@@ -151,7 +151,7 @@ async function fetchStatus() {
 				});
 		},
 		err => {
-			stopName.textContent = 'Could not get your location';
+			busStopName.textContent = 'Could not get your location';
 			statusText.textContent = 'Location access is required to find nearby bus stops.';
 			timesText.textContent = '';
 			busIcon.classList.add('hidden');
