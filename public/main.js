@@ -65,6 +65,12 @@ function xorEncrypt(text, key) {
 	return btoa(result); // base64 encode for safe transport
 }
 
+function updateMessages(busStop, status, message) {
+	busStopName.textContent = busStop;
+	statusText.textContent = status.toUpperCase();
+	timesText.innerHTML = message;
+}
+
 async function fetchStatus() {
 	navigator.geolocation.getCurrentPosition(
 		pos => {
@@ -82,19 +88,24 @@ async function fetchStatus() {
 						res.json().then(data => {
 							if (data.nearest) {
 								const { stopName, stopLat, stopLon, distance } = data.nearest;
-								busStopName.textContent = 'No Nearby Bus Stop';
-								statusText.innerHTML = `
-											Closest stop: <b>${stopName}</b><br>
-											Distance: <b>${distance}m</b><br>
-											<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
-												View in Google Maps
-											</a>
-										`;
+								updateMessages(
+									'No Nearby Bus Stop',
+									'NO BUS STOP',
+									`
+										Closest stop: <b>${stopName}</b><br>
+										Distance: <b>${distance}m</b><br>
+										<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
+											View in Google Maps
+										</a>
+									`
+								);
 							} else {
-								busStopName.textContent = 'No Nearby Bus Stop';
-								statusText.textContent = 'Please go to a bus stop and try again.';
+								updateMessages(
+									'No Nearby Bus Stop',
+									'NO BUS STOP',
+									'Please go to a bus stop and try again.'
+								);
 							}
-							timesText.textContent = '';
 							busIcon.classList.add('hidden');
 							busStop.classList.add('hidden');
 							stopPolling();
@@ -103,9 +114,11 @@ async function fetchStatus() {
 						return null;
 					}
 					if (res.status === 403) {
-						busStopName.textContent = 'Session Expired';
-						statusText.textContent = 'Please refresh the page to continue.';
-						timesText.textContent = '';
+						updateMessages(
+							'Session Expired',
+							'SESSION EXPIRED',
+							'Please refresh the page to continue.'
+						);
 						busIcon.classList.add('hidden');
 						busStop.classList.add('hidden');
 						stopPolling();
@@ -117,18 +130,15 @@ async function fetchStatus() {
 				.then(data => {
 					if (!data) return;
 
-					if (data.stopName) {
-						busStopName.textContent = data.stopName;
-					} else {
-						busStopName.textContent = 'Bus Status';
-					}
-
 					if (!data.estimatedTime || !data.scheduledTime || data.status === 'no_service') {
-						statusText.textContent = 'NO SERVICE';
-						timesText.innerHTML = `
+						updateMessages(
+							data.stopName || 'Bus Status',
+							'NO SERVICE',
+							`
 							The service is not currently running.<br>
 							Please check back later.
-						`;
+						`
+						);
 
 						busIcon.classList.add('hidden');
 						busStop.classList.add('hidden');
@@ -136,24 +146,26 @@ async function fetchStatus() {
 					}
 
 					busIcon.classList.remove('hidden');
-
-					currentStatus = data.status.replace('_', ' ');
-
-					statusText.textContent = currentStatus.toUpperCase();
 					startCountdown(data);
 				})
 				.catch(e => {
 					console.error(e);
-					statusText.innerHTML = `
+					updateMessages(
+						data.stopName || 'Bus Status',
+						'ERROR',
+						`
 						Error loading status.<br>
 						Please try again later.
-					`;
+						`
+					);
 				});
 		},
 		err => {
-			busStopName.textContent = 'Could not get your location';
-			statusText.textContent = 'Location access is required to find nearby bus stops.';
-			timesText.textContent = '';
+			updateMessages(
+				'Could not get your location',
+				'NO LOCATION',
+				'Location access is required to find nearby bus stops.'
+			);
 			busIcon.classList.add('hidden');
 			busStop.classList.add('hidden');
 			stopPolling();
@@ -190,18 +202,26 @@ function startCountdown(data) {
 		if (diff < 0) diff = 0;
 		const mins = Math.floor(diff / 60);
 		const secs = diff % 60;
-		timesText.innerHTML = `
-			The bus scheduled to arrive at<br>
-            <b>${scheduled}</b><br>
-            is ${currentStatus} and will arrive in:<br>
-            <b>${mins}m ${secs.toString().padStart(2, '0')}s</b>
-		`;
+		updateMessages(
+			data.stopName || 'Bus Status',
+			currentStatus,
+			`
+				The bus scheduled to arrive at<br>
+				<b>${scheduled}</b><br>
+				is ${currentStatus} and will arrive in:<br>
+				<b>${mins}m ${secs.toString().padStart(2, '0')}s</b>
+			`
+		);
 		if (diff === 0) {
 			clearInterval(countdownInterval);
 
 			if (data.keyword) {
 				stopPolling();
-				timesText.innerHTML = 'The bus has arrived!<br>Your keyword is: ' + data.keyword;
+				updateMessages(
+					data.stopName || 'Bus Status',
+					currentStatus,
+					'The bus has arrived!<br>Your keyword is: ' + data.keyword
+				);
 				showBusStopAndStopRoad();
 			}
 		}
