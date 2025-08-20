@@ -13,6 +13,8 @@ let roadMoving = true;
 let roadAnimId = null;
 const roadSpeed = 1.2; // Adjust for desired speed
 
+let countdownInterval = null;
+
 function startPolling() {
 	if (pollTimer) return; // Prevent multiple intervals
 	pollTimer = setInterval(fetchStatus, 30000);
@@ -123,7 +125,10 @@ async function fetchStatus() {
 
 					if (!data.estimatedTime || !data.scheduledTime || data.status === 'no_service') {
 						statusText.textContent = 'NO SERVICE';
-						timesText.textContent = 'The service is not currently running. Please check back later.';
+						timesText.innerHTML = `
+							The service is not currently running.<br>
+							Please check back later.
+						`;
 
 						busIcon.classList.add('hidden');
 						busStop.classList.add('hidden');
@@ -133,21 +138,16 @@ async function fetchStatus() {
 					busIcon.classList.remove('hidden');
 
 					currentStatus = data.status.replace('_', ' ');
-					const scheduled = secondsToHHMMSS(data.scheduledTime);
-					const estimated = secondsToHHMMSS(data.estimatedTime);
 
 					statusText.textContent = currentStatus.toUpperCase();
-					timesText.innerHTML = 'Scheduled: ' + scheduled + '<br>Estimated: ' + estimated;
-
-					if (data.keyword) {
-						stopPolling();
-						timesText.innerHTML = 'The bus will arrive ' + currentStatus + '!<br>Your keyword is: ' + data.keyword;
-						showBusStopAndStopRoad();
-					}
+					startCountdown(data);
 				})
 				.catch(e => {
 					console.error(e);
-					statusText.textContent = 'Error loading status. Please try again later.';
+					statusText.innerHTML = `
+						Error loading status.<br>
+						Please try again later.
+					`;
 				});
 		},
 		err => {
@@ -177,6 +177,38 @@ function setBusStopTransition(roadSpeed) {
 	duration *= 0.5; // Slow down a bit for smoother transition
 
 	busStop.style.transition = `left ${duration}s linear`;
+}
+
+function startCountdown(data) {
+	if (countdownInterval) clearInterval(countdownInterval);
+
+	function updateCountdown() {
+		const scheduled = secondsToHHMMSS(data.scheduledTime);
+		currentStatus = data.status.replace('_', ' ');
+		const now = Math.floor(Date.now() / 1000);
+		let diff = data.estimatedTime - now;
+		if (diff < 0) diff = 0;
+		const mins = Math.floor(diff / 60);
+		const secs = diff % 60;
+		timesText.innerHTML = `
+			The bus scheduled to arrive at<br>
+            <b>${scheduled}</b><br>
+            is ${currentStatus} and will arrive in:<br>
+            <b>${mins}m ${secs.toString().padStart(2, '0')}s</b>
+		`;
+		if (diff === 0) {
+			clearInterval(countdownInterval);
+
+			if (data.keyword) {
+				stopPolling();
+				timesText.innerHTML = 'The bus has arrived!<br>Your keyword is: ' + data.keyword;
+				showBusStopAndStopRoad();
+			}
+		}
+	}
+
+	updateCountdown();
+	countdownInterval = setInterval(updateCountdown, 1000);
 }
 
 // Start the road animation when the page loads

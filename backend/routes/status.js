@@ -109,13 +109,12 @@ router.post('/status', async (req, res) => {
 							scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 						}
 						let status = 'on_time';
-						let keyword = null;
+						const now = Math.floor(Date.now() / 1000);
+
 						if (nextBus.delay > acceptableDelay) {
 							status = 'late';
 						} else if (nextBus.delay < -acceptableDelay) {
 							status = 'early';
-						} else {
-							keyword = secretKeyword;
 						}
 
 						const response = {
@@ -125,7 +124,15 @@ router.post('/status', async (req, res) => {
 							delay: nextBus.delay,
 							stopName: nearest.stopName,
 						};
-						if (keyword) response.keyword = keyword;
+
+						// Only return keyword if within 1 minute of arrival time
+						if (
+							nextBus.arrivalTime &&
+							Math.abs(now - nextBus.arrivalTime) <= 60
+						) {
+							response.keyword = secretKeyword;
+						}
+
 						return res.json(response);
 					})
 					.catch(() => res.status(500).json({ error: 'DB error' }));
