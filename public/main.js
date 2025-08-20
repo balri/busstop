@@ -57,6 +57,17 @@ function stopRoad() {
 	}
 }
 
+function stopEverything() {
+	stopPolling();
+	stopRoad();
+	if (countdownInterval) {
+		clearInterval(countdownInterval);
+		countdownInterval = null;
+	}
+	busIcon.classList.add('hidden');
+	busStop.classList.add('hidden');
+}
+
 function xorEncrypt(text, key) {
 	let result = '';
 	for (let i = 0; i < text.length; i++) {
@@ -69,6 +80,14 @@ function updateMessages(busStop, status, message) {
 	busStopName.textContent = busStop;
 	statusText.textContent = status.toUpperCase();
 	timesText.innerHTML = message;
+}
+
+function displayDistance(distance) {
+	if (distance >= 1000) {
+		return (distance / 1000).toFixed(2) + 'km';
+	} else {
+		return distance + 'm';
+	}
 }
 
 async function fetchStatus() {
@@ -93,7 +112,7 @@ async function fetchStatus() {
 									'NO BUS STOP',
 									`
 										Closest stop: <b>${stopName}</b><br>
-										Distance: <b>${distance}m</b><br>
+										Distance: <b>${displayDistance(distance)}</b><br>
 										<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
 											View in Google Maps
 										</a>
@@ -106,10 +125,7 @@ async function fetchStatus() {
 									'Please go to a bus stop and try again.'
 								);
 							}
-							busIcon.classList.add('hidden');
-							busStop.classList.add('hidden');
-							stopPolling();
-							stopRoad();
+							stopEverything();
 						});
 						return null;
 					}
@@ -119,10 +135,7 @@ async function fetchStatus() {
 							'SESSION EXPIRED',
 							'Please refresh the page to continue.'
 						);
-						busIcon.classList.add('hidden');
-						busStop.classList.add('hidden');
-						stopPolling();
-						stopRoad();
+						stopEverything();
 						return null;
 					}
 					return res.json();
@@ -140,8 +153,7 @@ async function fetchStatus() {
 						`
 						);
 
-						busIcon.classList.add('hidden');
-						busStop.classList.add('hidden');
+						stopEverything();
 						return;
 					}
 
@@ -158,6 +170,7 @@ async function fetchStatus() {
 						Please try again later.
 						`
 					);
+					stopEverything();
 				});
 		},
 		err => {
@@ -166,10 +179,7 @@ async function fetchStatus() {
 				'NO LOCATION',
 				'Location access is required to find nearby bus stops.'
 			);
-			busIcon.classList.add('hidden');
-			busStop.classList.add('hidden');
-			stopPolling();
-			stopRoad();
+			stopEverything();
 		}
 	);
 }
