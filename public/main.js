@@ -257,6 +257,46 @@ function startCountdown(data) {
 	countdownInterval = setInterval(updateCountdown, 1000);
 }
 
+function setBackgroundByAEST() {
+	const aestHour = Number(
+		new Date().toLocaleString('en-US', {
+			hour: '2-digit',
+			hour12: false,
+			timeZone: 'Australia/Brisbane'
+		})
+	);
+
+	let bg;
+	const sun = document.getElementById('sun');
+	const moonStars = document.getElementById('moon-stars');
+	const timesText = document.getElementById('timesText');
+
+	if (aestHour >= 6 && aestHour < 17) {
+		// Day
+		bg = 'linear-gradient(to bottom, #fceabb 0%, #f8b500 100%)';
+		if (sun) sun.style.display = '';
+		if (moonStars) moonStars.style.display = 'none';
+		if (timesText) timesText.style.color = '#444'; // default
+	} else if (aestHour >= 17 && aestHour < 20) {
+		// Evening
+		bg = 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)';
+		if (sun) sun.style.display = 'none';
+		if (moonStars) moonStars.style.display = '';
+		if (timesText) timesText.style.color = '#cfe2ff'; // soft light blue for evening
+	} else {
+		// Night
+		bg = 'linear-gradient(to bottom, #232526 0%, #414345 100%)';
+		if (sun) sun.style.display = 'none';
+		if (moonStars) moonStars.style.display = '';
+		if (timesText) timesText.style.color = '#fffbe6'; // off-white for night
+	}
+	document.body.style.background = bg;
+}
+
+// Call on load and every minute
+setBackgroundByAEST();
+setInterval(setBackgroundByAEST, 60 * 1000);
+
 // Start the road animation when the page loads
 roadMoving = true;
 animateRoad();
