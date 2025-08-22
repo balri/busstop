@@ -46,13 +46,20 @@ function showBusStopAndStopRoad(data) {
 	setTimeout(() => {
 		busStop.classList.add('visible');
 	}, 20);
-	busStop.addEventListener('transitionend', stopRoad, { once: true });
+	busStop.addEventListener('transitionend', () => {
+		stopRoad(data)
+	}, { once: true });
 }
 
-function stopRoad() {
+function stopRoad(data) {
 	roadMoving = false;
 	if (roadAnimId) {
 		cancelAnimationFrame(roadAnimId);
+		updateMessages(
+			data.stopName || 'Bus Status',
+			currentStatus,
+			'The bus has arrived!<br>Your keyword is: ' + data.keyword
+		);
 		roadAnimId = null;
 	}
 }
@@ -158,6 +165,9 @@ async function fetchStatus() {
 					}
 
 					busIcon.classList.remove('hidden');
+					if (data.keyword) {
+						stopPolling();
+					}
 					startCountdown(data);
 				})
 				.catch(e => {
@@ -226,7 +236,6 @@ function startCountdown(data) {
 			clearInterval(countdownInterval);
 
 			if (data.keyword) {
-				stopPolling();
 				showBusStopAndStopRoad(data);
 			}
 		}
