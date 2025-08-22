@@ -39,7 +39,7 @@ function animateRoad() {
 	roadAnimId = requestAnimationFrame(animateRoad);
 }
 
-function showBusStopAndStopRoad() {
+function showBusStopAndStopRoad(data) {
 	setBusStopTransition(roadSpeed);
 	busStop.classList.remove('visible');
 	busStop.classList.remove('hidden');
@@ -227,12 +227,7 @@ function startCountdown(data) {
 
 			if (data.keyword) {
 				stopPolling();
-				updateMessages(
-					data.stopName || 'Bus Status',
-					currentStatus,
-					'The bus has arrived!<br>Your keyword is: ' + data.keyword
-				);
-				showBusStopAndStopRoad();
+				showBusStopAndStopRoad(data);
 			}
 		}
 	}
