@@ -29,7 +29,11 @@ function stopPolling() {
 
 function secondsToHHMMSS(seconds) {
 	const date = new Date(seconds * 1000);
-	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	return date.toLocaleTimeString('en-US', {
+		hour: 'numeric',
+		minute: '2-digit',
+		hour12: true
+	});
 }
 
 function animateRoad() {
@@ -222,13 +226,21 @@ function startCountdown(data) {
 		if (diff < 0) diff = 0;
 		const mins = Math.floor(diff / 60);
 		const secs = diff % 60;
+
+		let delayMsg = '';
+		const delayMins = Math.round(data.delay / 60);
+		if (data.status == 'late') {
+			delayMsg = `${delayMins} min `;
+		} else if (data.status == 'early') {
+			delayMsg = `${Math.abs(delayMins)} min `;
+		}
 		updateMessages(
 			data.stopName || 'Bus Status',
 			currentStatus,
 			`
 				The bus scheduled to arrive at<br>
 				<b>${scheduled}</b><br>
-				is ${currentStatus} and will arrive in:<br>
+				is ${delayMsg}${currentStatus} and will arrive in:<br>
 				<b>${mins}m ${secs.toString().padStart(2, '0')}s</b>
 			`
 		);

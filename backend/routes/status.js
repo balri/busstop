@@ -85,14 +85,16 @@ router.post('/status', async (req, res) => {
 			for (const entity of filteredEntities) {
 				const trip = entity.tripUpdate.trip;
 				for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate) {
-					const arrivalTime = stopTimeUpdate.arrival?.time?.toNumber?.() ?? null;
+					const arrival = stopTimeUpdate.arrival;
+					const arrivalTime = arrival?.time?.toNumber?.() ?? null;
 					if (!arrivalTime || arrivalTime < now) continue;
 					if (!nextBus || arrivalTime < nextBus.arrivalTime) {
 						nextBus = {
 							tripId: trip.tripId,
 							startDate: trip.startDate,
 							arrivalTime,
-							delay: stopTimeUpdate.arrival?.delay ?? null,
+							delay: arrival?.delay ?? null,
+							uncertainty: arrival?.uncertainty ?? null
 						};
 					}
 				}
@@ -126,9 +128,10 @@ router.post('/status', async (req, res) => {
 						};
 
 						// Only return keyword if within 1 minute of arrival time
+						const uncertainty = nextBus.uncertainty || 30;
 						if (
 							nextBus.arrivalTime &&
-							Math.abs(now - nextBus.arrivalTime) <= 60
+							Math.abs(now - nextBus.arrivalTime) <= uncertainty
 						) {
 							response.keyword = secretKeyword;
 						}
