@@ -8,7 +8,7 @@ export function getScheduledTime(tripId: string, stopId: string): Promise<string
 		db.get(
 			'SELECT arrival_time FROM stop_times WHERE trip_id = ? AND stop_id = ?',
 			[tripId, stopId],
-			(err: Error | null, row: any) => {
+			(err: Error | null, row: { arrival_time: string } | undefined) => {
 				if (err) return reject(err);
 				resolve(row ? row.arrival_time : null);
 			}

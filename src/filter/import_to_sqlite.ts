@@ -2,11 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
 import sqlite3 from 'sqlite3';
+import { CsvRow, DbTable } from './types';
 
 const DB_FILE = path.join('../', 'gtfs.db');
 const FEEDS_DIR = '../../feeds';
 
-const TABLES = [
+const TABLES: DbTable[] = [
 	{
 		name: 'stop_times',
 		file: 'stop_times_filtered.csv',
@@ -50,12 +51,12 @@ const TABLES = [
 	}
 ];
 
-function importCsvToTable(db: sqlite3.Database, table: { name: any; file?: string; columns: any; }, filePath: fs.PathLike) {
+function importCsvToTable(db: sqlite3.Database, table: DbTable, filePath: fs.PathLike): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
-		const rows: any[] = [];
+		const rows: CsvRow[] = [];
 		fs.createReadStream(filePath)
 			.pipe(csv())
-			.on('data', (row: Record<string, string>) => rows.push(row))
+			.on('data', (row: CsvRow) => rows.push(row))
 			.on('end', () => {
 				const placeholders = table.columns.map(() => '?').join(',');
 				const insertSql = `INSERT INTO ${table.name} VALUES (${placeholders})`;
@@ -81,7 +82,7 @@ function importCsvToTable(db: sqlite3.Database, table: { name: any; file?: strin
 	});
 }
 
-async function main() {
+async function main(): Promise<void> {
 	const db = new sqlite3.Database(DB_FILE);
 	try {
 		for (const table of TABLES) {

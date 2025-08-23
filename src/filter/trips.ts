@@ -1,18 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
+import { CsvRow, CsvHeader, CsvRows } from './types';
 
 const STOP_TIMES_FILE = '../../feeds/stop_times_filtered.csv';
 const TRIPS_FILE = path.join('../../feeds', 'trips.txt');
 const OUTPUT_FILE = '../../feeds/trips_filtered.csv';
 
 // 1. Read trip_ids from stop_times_filtered.csv
-function getTripIdsFromCsv(file: fs.PathLike) {
+function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
-		const tripIds = new Set();
+		const tripIds = new Set<string>();
 		fs.createReadStream(file)
 			.pipe(csv())
-			.on('data', (row: Record<string, string>) => {
+			.on('data', (row: CsvRow) => {
 				if (row.trip_id) tripIds.add(row.trip_id);
 			})
 			.on('end', () => resolve(tripIds))
@@ -21,15 +22,15 @@ function getTripIdsFromCsv(file: fs.PathLike) {
 }
 
 // 2. Filter trips.txt to just those trip_ids
-function filterTrips(tripIds: any): Promise<{ header: any, filtered: any[] }> {
+function filterTrips(tripIds: Set<string>): Promise<{ header: CsvHeader, filtered: CsvRows }> {
 	return new Promise((resolve, reject) => {
-		const filtered: any[] = [];
-		let header: any = null;
+		const filtered: CsvRows = [];
+		let header: CsvHeader = [];
 		fs.createReadStream(TRIPS_FILE)
 			.pipe(csv())
-			.on('headers', (headers: string[]) => { header = headers; })
-			.on('data', (row: Record<string, string>) => {
-				if (tripIds.has(row.trip_id)) filtered.push(row);
+			.on('headers', (headers: CsvHeader) => { header = headers; })
+			.on('data', (row: CsvRow) => {
+				if (row['trip_id'] && tripIds.has(row['trip_id'])) filtered.push(row);
 			})
 			.on('end', () => resolve({ header, filtered }))
 			.on('error', reject);
@@ -37,7 +38,7 @@ function filterTrips(tripIds: any): Promise<{ header: any, filtered: any[] }> {
 }
 
 // 3. Write filtered trips to CSV
-function writeCsv(header: any[], rows: any, file: fs.PathOrFileDescriptor) {
+function writeCsv(header: CsvHeader, rows: CsvRows, file: fs.PathOrFileDescriptor): void {
 	const out = [header.join(',')];
 	for (const row of rows) {
 		out.push(header.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`).join(','));
@@ -45,7 +46,7 @@ function writeCsv(header: any[], rows: any, file: fs.PathOrFileDescriptor) {
 	fs.writeFileSync(file, out.join('\n'));
 }
 
-async function main() {
+async function main(): Promise<void> {
 	try {
 		const tripIds = await getTripIdsFromCsv(STOP_TIMES_FILE);
 		const { header, filtered } = await filterTrips(tripIds);

@@ -4,23 +4,7 @@ import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
 import { db, getScheduledTime } from '../db';
 import { haversine, xorDecrypt, scheduledTimeToUnix } from '../utils';
 import { validateToken } from '../tokens';
-
-// Define the type for nearest stop
-interface NearestStop {
-	stopId: string;
-	stopName: string;
-	stopLat: number;
-	stopLon: number;
-	distance: number;
-}
-
-// Define the type for next bus
-interface NextBus {
-	tripId?: string | undefined;
-	startDate?: string | undefined;
-	arrivalTime: number;
-	delay: number | null;
-}
+import { NearestStop, NextBus, StatusResponse, Stops } from './types';
 
 const router = express.Router();
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
@@ -39,12 +23,13 @@ router.post('/status', async (req, res) => {
 		userLat = parseFloat(parsed.lat);
 		userLon = parseFloat(parsed.lon);
 	} catch (e) {
+		console.error('Failed to parse location:', e);
 		return res.status(400).json({ error: 'Invalid coordinates' });
 	}
 
 	const minDistance = Number(process.env.MIN_DISTANCE) || 100;
 
-	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err: Error | null, stops: any) => {
+	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err: Error | null, stops: Stops) => {
 		if (err) return res.status(500).json({ error: 'DB error' });
 
 		let nearest: NearestStop | null = null;
@@ -139,7 +124,7 @@ router.post('/status', async (req, res) => {
 							status = 'early';
 						}
 
-						const response: any = {
+						const response: StatusResponse = {
 							status,
 							scheduledTime,
 							estimatedTime: nextBus.arrivalTime,
@@ -162,6 +147,7 @@ router.post('/status', async (req, res) => {
 				return res.json({ status: 'no_service' });
 			}
 		} catch (e) {
+			console.error('Failed to fetch GTFS-RT feed:', e);
 			return res.status(500).json({ error: 'Failed to fetch GTFS-RT feed' });
 		}
 	});

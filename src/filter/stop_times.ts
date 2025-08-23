@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
+import { StopTime, StopTimes, Trip } from './types';
 
 const TARGET_ROUTE_ID = '61-4158';
 
@@ -16,7 +17,7 @@ async function parseTrips(): Promise<Set<string>> {
 
 		fs.createReadStream(tripsFile)
 			.pipe(csv())
-			.on('data', (row: Record<string, string>) => {
+			.on('data', (row: Trip) => {
 				if (row.route_id === TARGET_ROUTE_ID && row.trip_id) {
 					tripIds.add(row.trip_id);
 				}
@@ -29,25 +30,13 @@ async function parseTrips(): Promise<Set<string>> {
 	});
 }
 
-async function filterStopTimes(tripIds: Set<string>): Promise<Array<{
-	trip_id: string;
-	arrival_time: string;
-	departure_time: string;
-	stop_id: string;
-	stop_sequence: string;
-}>> {
+async function filterStopTimes(tripIds: Set<string>): Promise<StopTimes> {
 	return new Promise((resolve, reject) => {
-		const filtered: Array<{
-			trip_id: string;
-			arrival_time: string;
-			departure_time: string;
-			stop_id: string;
-			stop_sequence: string;
-		}> = [];
+		const filtered: StopTimes = [];
 
 		fs.createReadStream(stopTimesFile)
 			.pipe(csv())
-			.on('data', (row: Record<string, string>) => {
+			.on('data', (row: StopTime) => {
 				if (row.trip_id && tripIds.has(row.trip_id)) {
 					// Keep all stop_ids for the route
 					filtered.push({
@@ -67,14 +56,14 @@ async function filterStopTimes(tripIds: Set<string>): Promise<Array<{
 	});
 }
 
-async function main() {
+async function main(): Promise<void> {
 	try {
 		const tripIds = await parseTrips();
 		const filteredStopTimes = await filterStopTimes(tripIds);
 
 		// Write CSV header
 		const header = 'trip_id,arrival_time,departure_time,stop_id,stop_sequence\n';
-		const rows = filteredStopTimes.map((row: { trip_id: any; arrival_time: any; departure_time: any; stop_id: any; stop_sequence: any; }) =>
+		const rows = filteredStopTimes.map((row: StopTime) =>
 			`${row.trip_id},${row.arrival_time},${row.departure_time},${row.stop_id},${row.stop_sequence}`
 		);
 		fs.writeFileSync(OUTPUT_FILE, header + rows.join('\n'));
