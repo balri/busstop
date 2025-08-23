@@ -94,7 +94,6 @@ router.post('/status', async (req, res) => {
 							startDate: trip.startDate,
 							arrivalTime,
 							delay: arrival?.delay ?? null,
-							uncertainty: arrival?.uncertainty ?? null
 						};
 					}
 				}
@@ -128,10 +127,9 @@ router.post('/status', async (req, res) => {
 						};
 
 						// Only return keyword if within 1 minute of arrival time
-						const uncertainty = nextBus.uncertainty || 30;
 						if (
 							nextBus.arrivalTime &&
-							Math.abs(now - nextBus.arrivalTime) <= uncertainty
+							Math.abs(now - nextBus.arrivalTime) <= 60
 						) {
 							response.keyword = secretKeyword;
 						}

@@ -59,11 +59,13 @@ function stopRoad(data) {
 	roadMoving = false;
 	if (roadAnimId) {
 		cancelAnimationFrame(roadAnimId);
-		updateMessages(
-			data.stopName || 'Bus Status',
-			currentStatus,
-			'The bus has arrived!<br>Your keyword is: ' + data.keyword
-		);
+		if (data?.keyword) {
+			updateMessages(
+				data.stopName || 'Bus Status',
+				currentStatus,
+				'The bus has arrived!<br>Your keyword is: ' + data.keyword
+			);
+		}
 		roadAnimId = null;
 	}
 }
@@ -273,7 +275,7 @@ function setBackgroundByAEST() {
 
 	if (aestHour >= 6 && aestHour < 17) {
 		// Day
-		bg = 'linear-gradient(to bottom, #fceabb 0%, #f8b500 100%)';
+		bg = 'linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)';
 		if (sun) sun.style.display = '';
 		if (moonStars) moonStars.style.display = 'none';
 		if (timesText) timesText.style.color = '#444'; // default
