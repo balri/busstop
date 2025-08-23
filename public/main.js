@@ -109,6 +109,7 @@ async function fetchStatus() {
 			const { latitude, longitude } = pos.coords;
 			const loc = JSON.stringify({ lat: latitude, lon: longitude });
 			const encryptedLoc = xorEncrypt(loc, window.BUS_TOKEN);
+			updateSkyBySunTimes(latitude, longitude);
 
 			fetch('/status', {
 				method: 'POST',
@@ -259,45 +260,39 @@ function startCountdown(data) {
 	countdownInterval = setInterval(updateCountdown, 1000);
 }
 
-function setBackgroundByAEST() {
-	const aestHour = Number(
-		new Date().toLocaleString('en-US', {
-			hour: '2-digit',
-			hour12: false,
-			timeZone: 'Australia/Brisbane'
-		})
-	);
+function updateSkyBySunTimes(lat, lon) {
+	const now = new Date();
+	const times = SunCalc.getTimes(now, lat, lon);
 
-	let bg;
 	const sun = document.getElementById('sun');
 	const moonStars = document.getElementById('moon-stars');
 	const timesText = document.getElementById('timesText');
 
-	if (aestHour >= 6 && aestHour < 17) {
+	let bg;
+	if (now >= times.sunrise && now < times.sunset) {
 		// Day
 		bg = 'linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)';
 		if (sun) sun.style.display = '';
 		if (moonStars) moonStars.style.display = 'none';
-		if (timesText) timesText.style.color = '#444'; // default
-	} else if (aestHour >= 17 && aestHour < 20) {
-		// Evening
+		if (timesText) timesText.style.color = '#444';
+	} else if (
+		(now >= times.sunset && now < times.night) ||
+		(now >= times.nightEnd && now < times.sunrise)
+	) {
+		// Twilight
 		bg = 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)';
 		if (sun) sun.style.display = 'none';
 		if (moonStars) moonStars.style.display = '';
-		if (timesText) timesText.style.color = '#cfe2ff'; // soft light blue for evening
+		if (timesText) timesText.style.color = '#cfe2ff';
 	} else {
 		// Night
 		bg = 'linear-gradient(to bottom, #232526 0%, #414345 100%)';
 		if (sun) sun.style.display = 'none';
 		if (moonStars) moonStars.style.display = '';
-		if (timesText) timesText.style.color = '#fffbe6'; // off-white for night
+		if (timesText) timesText.style.color = '#fffbe6';
 	}
 	document.body.style.background = bg;
 }
-
-// Call on load and every minute
-setBackgroundByAEST();
-setInterval(setBackgroundByAEST, 60 * 1000);
 
 // Start the road animation when the page loads
 roadMoving = true;
