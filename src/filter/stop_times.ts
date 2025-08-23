@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
 
 const TARGET_ROUTE_ID = '61-4158';
 
@@ -10,9 +10,9 @@ const OUTPUT_FILE = '../../feeds/stop_times_filtered.csv'; // Output CSV file
 const tripsFile = path.join(GTFS_DIR, 'trips.txt');
 const stopTimesFile = path.join(GTFS_DIR, 'stop_times.txt');
 
-async function parseTrips() {
+async function parseTrips(): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
-		const tripIds = new Set();
+		const tripIds = new Set<string>();
 
 		fs.createReadStream(tripsFile)
 			.pipe(csv())
@@ -29,9 +29,21 @@ async function parseTrips() {
 	});
 }
 
-async function filterStopTimes(tripIds) {
+async function filterStopTimes(tripIds: Set<string>): Promise<Array<{
+	trip_id: string;
+	arrival_time: string;
+	departure_time: string;
+	stop_id: string;
+	stop_sequence: string;
+}>> {
 	return new Promise((resolve, reject) => {
-		const filtered = [];
+		const filtered: Array<{
+			trip_id: string;
+			arrival_time: string;
+			departure_time: string;
+			stop_id: string;
+			stop_sequence: string;
+		}> = [];
 
 		fs.createReadStream(stopTimesFile)
 			.pipe(csv())
@@ -62,7 +74,7 @@ async function main() {
 
 		// Write CSV header
 		const header = 'trip_id,arrival_time,departure_time,stop_id,stop_sequence\n';
-		const rows = filteredStopTimes.map(row =>
+		const rows = filteredStopTimes.map((row: { trip_id: any; arrival_time: any; departure_time: any; stop_id: any; stop_sequence: any; }) =>
 			`${row.trip_id},${row.arrival_time},${row.departure_time},${row.stop_id},${row.stop_sequence}`
 		);
 		fs.writeFileSync(OUTPUT_FILE, header + rows.join('\n'));

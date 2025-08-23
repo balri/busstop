@@ -1,8 +1,8 @@
-const { DateTime } = require('luxon');
+import { DateTime } from 'luxon';
 
-function haversine(lat1, lon1, lat2, lon2) {
+export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
 	const R = 6371000;
-	const toRad = deg => deg * Math.PI / 180;
+	const toRad = (deg: number) => deg * Math.PI / 180;
 	const dLat = toRad(lat2 - lat1);
 	const dLon = toRad(lon2 - lon1);
 	const a =
@@ -13,7 +13,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 	return R * c;
 }
 
-function xorDecrypt(encoded, key) {
+export function xorDecrypt(encoded: string, key: string): string {
 	const text = Buffer.from(encoded, 'base64').toString('binary');
 	let result = '';
 	for (let i = 0; i < text.length; i++) {
@@ -22,7 +22,7 @@ function xorDecrypt(encoded, key) {
 	return result;
 }
 
-function scheduledTimeToUnix(startDate, scheduledTime) {
+export function scheduledTimeToUnix(startDate: string, scheduledTime: string): number {
 	const year = +startDate.substring(0, 4);
 	const month = +startDate.substring(4, 6);
 	const day = +startDate.substring(6, 8);
@@ -33,5 +33,3 @@ function scheduledTimeToUnix(startDate, scheduledTime) {
 	);
 	return Math.floor(dt.toSeconds());
 }
-
-module.exports = { haversine, xorDecrypt, scheduledTimeToUnix };

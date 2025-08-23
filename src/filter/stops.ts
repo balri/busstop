@@ -1,15 +1,15 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
 
 const STOP_TIMES_FILE = '../../feeds/stop_times_filtered.csv'; // or .json if you prefer
 const STOPS_FILE = path.join('../../feeds', 'stops.txt');
 const OUTPUT_FILE = '../../feeds/stops_filtered.csv';
 
 // 1. Read stop_ids from stop_times_filtered.csv
-function getStopIdsFromCsv(file) {
+function getStopIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
-		const stopIds = new Set();
+		const stopIds = new Set<string>();
 		fs.createReadStream(file)
 			.pipe(csv())
 			.on('data', row => {
@@ -21,10 +21,10 @@ function getStopIdsFromCsv(file) {
 }
 
 // 2. Filter stops.txt to just those stop_ids
-function filterStops(stopIds) {
+function filterStops(stopIds: Set<string>): Promise<{ header: any; filtered: any[] }> {
 	return new Promise((resolve, reject) => {
-		const filtered = [];
-		let header = null;
+		const filtered: any[] = [];
+		let header: any = null;
 		fs.createReadStream(STOPS_FILE)
 			.pipe(csv())
 			.on('headers', (headers) => { header = headers; })
@@ -37,10 +37,10 @@ function filterStops(stopIds) {
 }
 
 // 3. Write filtered stops to CSV
-function writeCsv(header, rows, file) {
+function writeCsv(header: any[], rows: any, file: fs.PathOrFileDescriptor) {
 	const out = [header.join(',')];
 	for (const row of rows) {
-		out.push(header.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`).join(','));
+		out.push(header.map((h: string | number) => `"${(row[h] || '').replace(/"/g, '""')}"`).join(','));
 	}
 	fs.writeFileSync(file, out.join('\n'));
 }

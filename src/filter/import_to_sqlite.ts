@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
-const sqlite3 = require('sqlite3').verbose();
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
+import sqlite3 from 'sqlite3';
 
 const DB_FILE = path.join('../', 'gtfs.db');
 const FEEDS_DIR = '../../feeds';
@@ -50,9 +50,9 @@ const TABLES = [
 	}
 ];
 
-function importCsvToTable(db, table, filePath) {
-	return new Promise((resolve, reject) => {
-		const rows = [];
+function importCsvToTable(db: sqlite3.Database, table: { name: any; file?: string; columns: any; }, filePath: fs.PathLike) {
+	return new Promise<void>((resolve, reject) => {
+		const rows: any[] = [];
 		fs.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', row => rows.push(row))
@@ -64,7 +64,13 @@ function importCsvToTable(db, table, filePath) {
 					db.run(`CREATE TABLE ${table.name} (${table.columns.join(',')})`);
 					const stmt = db.prepare(insertSql);
 					for (const row of rows) {
-						stmt.run(table.columns.map(col => row[col.split(' ')[0]]));
+						stmt.run(table.columns.map((col: string) => {
+							const key = col.split(' ')[0];
+							if (typeof key === 'string' && key in row) {
+								return row[key];
+							}
+							return null;
+						}));
 					}
 					stmt.finalize();
 					console.log(`Imported ${rows.length} rows into ${table.name}`);

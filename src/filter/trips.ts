@@ -1,13 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
 
 const STOP_TIMES_FILE = '../../feeds/stop_times_filtered.csv';
 const TRIPS_FILE = path.join('../../feeds', 'trips.txt');
 const OUTPUT_FILE = '../../feeds/trips_filtered.csv';
 
 // 1. Read trip_ids from stop_times_filtered.csv
-function getTripIdsFromCsv(file) {
+function getTripIdsFromCsv(file: fs.PathLike) {
 	return new Promise((resolve, reject) => {
 		const tripIds = new Set();
 		fs.createReadStream(file)
@@ -21,10 +21,10 @@ function getTripIdsFromCsv(file) {
 }
 
 // 2. Filter trips.txt to just those trip_ids
-function filterTrips(tripIds) {
+function filterTrips(tripIds: any): Promise<{ header: any, filtered: any[] }> {
 	return new Promise((resolve, reject) => {
-		const filtered = [];
-		let header = null;
+		const filtered: any[] = [];
+		let header: any = null;
 		fs.createReadStream(TRIPS_FILE)
 			.pipe(csv())
 			.on('headers', (headers) => { header = headers; })
@@ -37,7 +37,7 @@ function filterTrips(tripIds) {
 }
 
 // 3. Write filtered trips to CSV
-function writeCsv(header, rows, file) {
+function writeCsv(header: any[], rows: any, file: fs.PathOrFileDescriptor) {
 	const out = [header.join(',')];
 	for (const row of rows) {
 		out.push(header.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`).join(','));

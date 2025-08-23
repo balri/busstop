@@ -12,4 +12,4 @@ echo "Acceptable delay set to $ACCEPTABLE_DELAY seconds"
 echo "Minimum distance set to $MIN_DISTANCE metres"
 echo "Go to http://localhost:3000 to test the application"
 
-node "$PROJECT_DIR/backend/index.js"
+npm run dev

@@ -1,9 +1,26 @@
-const express = require('express');
-const axios = require('axios');
-const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
-const { db, getScheduledTime } = require('../db');
-const { haversine, xorDecrypt, scheduledTimeToUnix } = require('../utils');
-const { validateToken } = require('../tokens');
+import express from 'express';
+import axios from 'axios';
+import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
+import { db, getScheduledTime } from '../db';
+import { haversine, xorDecrypt, scheduledTimeToUnix } from '../utils';
+import { validateToken } from '../tokens';
+
+// Define the type for nearest stop
+interface NearestStop {
+	stopId: string;
+	stopName: string;
+	stopLat: number;
+	stopLon: number;
+	distance: number;
+}
+
+// Define the type for next bus
+interface NextBus {
+	tripId?: string | undefined;
+	startDate?: string | undefined;
+	arrivalTime: number;
+	delay: number | null;
+}
 
 const router = express.Router();
 const GTFS_RT_URL = 'https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates';
@@ -25,12 +42,12 @@ router.post('/status', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid coordinates' });
 	}
 
-	const minDistance = process.env.MIN_DISTANCE || 100;
+	const minDistance = Number(process.env.MIN_DISTANCE) || 100;
 
-	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err, stops) => {
+	db.all('SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops', async (err: Error | null, stops: any) => {
 		if (err) return res.status(500).json({ error: 'DB error' });
 
-		let nearest = null;
+		let nearest: NearestStop | null = null;
 		let minDist = Infinity;
 		for (const stop of stops) {
 			const dist = haversine(userLat, userLon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
@@ -39,8 +56,8 @@ router.post('/status', async (req, res) => {
 				nearest = {
 					stopId: stop.stop_id,
 					stopName: stop.stop_name,
-					stopLat: stop.stop_lat,
-					stopLon: stop.stop_lon,
+					stopLat: parseFloat(stop.stop_lat),
+					stopLon: parseFloat(stop.stop_lon),
 					distance: Math.round(dist)
 				};
 			}
@@ -62,21 +79,21 @@ router.post('/status', async (req, res) => {
 				new Uint8Array(response.data)
 			);
 			const now = Math.floor(Date.now() / 1000);
-			let nextBus = null;
+			let nextBus: NextBus | null = null;
 
 			const filteredEntities = feed.entity
 				.filter(entity =>
 					entity.tripUpdate &&
 					entity.tripUpdate.trip.routeId === TARGET_ROUTE_ID &&
-					entity.tripUpdate.stopTimeUpdate.some(
+					entity.tripUpdate.stopTimeUpdate?.some(
 						stopTimeUpdate => stopTimeUpdate.stopId === stopId
 					)
 				)
 				.map(entity => ({
 					id: entity.id,
 					tripUpdate: {
-						trip: entity.tripUpdate.trip,
-						stopTimeUpdate: entity.tripUpdate.stopTimeUpdate.filter(
+						trip: entity.tripUpdate?.trip,
+						stopTimeUpdate: entity.tripUpdate?.stopTimeUpdate?.filter(
 							stopTimeUpdate => stopTimeUpdate.stopId === stopId
 						)
 					}
@@ -84,14 +101,18 @@ router.post('/status', async (req, res) => {
 
 			for (const entity of filteredEntities) {
 				const trip = entity.tripUpdate.trip;
-				for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate) {
+				for (const stopTimeUpdate of entity.tripUpdate.stopTimeUpdate || []) {
 					const arrival = stopTimeUpdate.arrival;
-					const arrivalTime = arrival?.time?.toNumber?.() ?? null;
-					if (!arrivalTime || arrivalTime < now) continue;
+					const arrivalTime = arrival?.time != null
+						? (typeof arrival.time === 'object' && typeof arrival.time.toNumber === 'function'
+							? arrival.time.toNumber()
+							: arrival.time)
+						: null;
+					if (typeof arrivalTime !== 'number' || arrivalTime < now) continue;
 					if (!nextBus || arrivalTime < nextBus.arrivalTime) {
 						nextBus = {
-							tripId: trip.tripId,
-							startDate: trip.startDate,
+							tripId: trip?.tripId ?? undefined,
+							startDate: trip?.startDate ?? undefined,
 							arrivalTime,
 							delay: arrival?.delay ?? null,
 						};
@@ -100,25 +121,25 @@ router.post('/status', async (req, res) => {
 			}
 
 			const secretKeyword = process.env.SECRET_KEYWORD || null;
-			const acceptableDelay = process.env.ACCEPTABLE_DELAY || 60;
+			const acceptableDelay = Number(process.env.ACCEPTABLE_DELAY) || 60;
 
-			if (nextBus) {
+			if (nextBus && nextBus.tripId) {
 				getScheduledTime(nextBus.tripId, stopId)
 					.then(scheduledStr => {
 						let scheduledTime = null;
-						if (scheduledStr) {
+						if (scheduledStr && typeof nextBus.startDate === 'string') {
 							scheduledTime = scheduledTimeToUnix(nextBus.startDate, scheduledStr);
 						}
 						let status = 'on_time';
 						const now = Math.floor(Date.now() / 1000);
 
-						if (nextBus.delay > acceptableDelay) {
+						if (typeof nextBus.delay === 'number' && nextBus.delay > acceptableDelay) {
 							status = 'late';
-						} else if (nextBus.delay < -acceptableDelay) {
+						} else if (typeof nextBus.delay === 'number' && nextBus.delay < -acceptableDelay) {
 							status = 'early';
 						}
 
-						const response = {
+						const response: any = {
 							status,
 							scheduledTime,
 							estimatedTime: nextBus.arrivalTime,
@@ -146,4 +167,4 @@ router.post('/status', async (req, res) => {
 	});
 });
 
-module.exports = router;
+export default router;

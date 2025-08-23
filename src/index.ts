@@ -1,8 +1,8 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const { generateToken } = require('./tokens');
-const statusRouter = require('./routes/status');
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { generateToken } from './tokens';
+import statusRouter from './routes/status';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

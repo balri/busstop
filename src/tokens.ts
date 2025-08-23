@@ -1,15 +1,16 @@
-const crypto = require('crypto');
-const tokens = new Map();
+import crypto from 'crypto';
 
-const tokenExpiry = process.env.TOKEN_EXPIRY_MS || 15 * 60 * 1000; // 15 minutes
+export const tokens = new Map();
 
-function generateToken() {
+const tokenExpiry = process.env.TOKEN_EXPIRY_MS ? Number(process.env.TOKEN_EXPIRY_MS) : 15 * 60 * 1000; // 15 minutes
+
+export function generateToken() {
 	const token = crypto.randomBytes(16).toString('hex');
 	tokens.set(token, Date.now() + tokenExpiry);
 	return token;
 }
 
-function validateToken(token) {
+export function validateToken(token: string) {
 	const expiry = tokens.get(token);
 	return expiry && expiry > Date.now();
 }
@@ -22,5 +23,3 @@ function cleanupTokens() {
 }
 
 setInterval(cleanupTokens, 60 * 1000);
-
-module.exports = { generateToken, validateToken, tokens };

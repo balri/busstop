@@ -1,5 +1,5 @@
 .DS_Store
+dist
 feeds
-backend/busdata.db
-backend/cron.log
-backend/node_modules
+node_modules
+src/busdata.db
