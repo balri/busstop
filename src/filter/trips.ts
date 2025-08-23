@@ -12,7 +12,7 @@ function getTripIdsFromCsv(file: fs.PathLike) {
 		const tripIds = new Set();
 		fs.createReadStream(file)
 			.pipe(csv())
-			.on('data', row => {
+			.on('data', (row: Record<string, string>) => {
 				if (row.trip_id) tripIds.add(row.trip_id);
 			})
 			.on('end', () => resolve(tripIds))
@@ -27,8 +27,8 @@ function filterTrips(tripIds: any): Promise<{ header: any, filtered: any[] }> {
 		let header: any = null;
 		fs.createReadStream(TRIPS_FILE)
 			.pipe(csv())
-			.on('headers', (headers) => { header = headers; })
-			.on('data', row => {
+			.on('headers', (headers: string[]) => { header = headers; })
+			.on('data', (row: Record<string, string>) => {
 				if (tripIds.has(row.trip_id)) filtered.push(row);
 			})
 			.on('end', () => resolve({ header, filtered }))

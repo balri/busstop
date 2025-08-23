@@ -16,8 +16,8 @@ async function parseTrips(): Promise<Set<string>> {
 
 		fs.createReadStream(tripsFile)
 			.pipe(csv())
-			.on('data', (row) => {
-				if (row.route_id === TARGET_ROUTE_ID) {
+			.on('data', (row: Record<string, string>) => {
+				if (row.route_id === TARGET_ROUTE_ID && row.trip_id) {
 					tripIds.add(row.trip_id);
 				}
 			})
@@ -47,15 +47,15 @@ async function filterStopTimes(tripIds: Set<string>): Promise<Array<{
 
 		fs.createReadStream(stopTimesFile)
 			.pipe(csv())
-			.on('data', (row) => {
-				if (tripIds.has(row.trip_id)) {
+			.on('data', (row: Record<string, string>) => {
+				if (row.trip_id && tripIds.has(row.trip_id)) {
 					// Keep all stop_ids for the route
 					filtered.push({
-						trip_id: row.trip_id,
-						arrival_time: row.arrival_time,
-						departure_time: row.departure_time,
-						stop_id: row.stop_id,
-						stop_sequence: row.stop_sequence
+						trip_id: row.trip_id ?? '',
+						arrival_time: row.arrival_time ?? '',
+						departure_time: row.departure_time ?? '',
+						stop_id: row.stop_id ?? '',
+						stop_sequence: row.stop_sequence ?? ''
 					});
 				}
 			})

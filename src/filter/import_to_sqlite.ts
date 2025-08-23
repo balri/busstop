@@ -55,7 +55,7 @@ function importCsvToTable(db: sqlite3.Database, table: { name: any; file?: strin
 		const rows: any[] = [];
 		fs.createReadStream(filePath)
 			.pipe(csv())
-			.on('data', row => rows.push(row))
+			.on('data', (row: Record<string, string>) => rows.push(row))
 			.on('end', () => {
 				const placeholders = table.columns.map(() => '?').join(',');
 				const insertSql = `INSERT INTO ${table.name} VALUES (${placeholders})`;

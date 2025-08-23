@@ -12,7 +12,7 @@ function getStopIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 		const stopIds = new Set<string>();
 		fs.createReadStream(file)
 			.pipe(csv())
-			.on('data', row => {
+			.on('data', (row: Record<string, string>) => {
 				if (row.stop_id) stopIds.add(row.stop_id);
 			})
 			.on('end', () => resolve(stopIds))
@@ -27,9 +27,9 @@ function filterStops(stopIds: Set<string>): Promise<{ header: any; filtered: any
 		let header: any = null;
 		fs.createReadStream(STOPS_FILE)
 			.pipe(csv())
-			.on('headers', (headers) => { header = headers; })
-			.on('data', row => {
-				if (stopIds.has(row.stop_id)) filtered.push(row);
+			.on('headers', (headers: string[]) => { header = headers; })
+			.on('data', (row: Record<string, string>) => {
+				if (row.stop_id && stopIds.has(row.stop_id)) filtered.push(row);
 			})
 			.on('end', () => resolve({ header, filtered }))
 			.on('error', reject);
