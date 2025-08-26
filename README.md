@@ -19,3 +19,10 @@ MIN_DISTANCE=500 // 500m
 SECRET_KEYWORD=test
 TOKEN_EXPIRY_MS=900000 // 15 minutes
 ```
+
+# Puppeteer
+
+Takes a screenshot of the site every hour
+```
+0 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
+```

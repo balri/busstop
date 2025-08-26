@@ -317,8 +317,24 @@ function updateSkyBySunTimes(lat, lon) {
 			moon.style.left = `${left}%`;
 			moon.style.top = `${top}%`;
 		}
+
+		if (moon) {
+			const moonIllum = SunCalc.getMoonIllumination(now);
+			moon.textContent = getMoonPhaseEmoji(moonIllum.phase);
+		}
 	}
 	document.body.style.background = bg;
+}
+
+function getMoonPhaseEmoji(phase) {
+	if (phase < 0.03 || phase > 0.97) return "🌑"; // New moon
+	if (phase < 0.22) return "🌒"; // Waxing crescent
+	if (phase < 0.28) return "🌓"; // First quarter
+	if (phase < 0.47) return "🌔"; // Waxing gibbous
+	if (phase < 0.53) return "🌕"; // Full moon
+	if (phase < 0.72) return "🌖"; // Waning gibbous
+	if (phase < 0.78) return "🌗"; // Last quarter
+	return "🌘"; // Waning crescent
 }
 
 updateSkyBySunTimes(lat, lon);
