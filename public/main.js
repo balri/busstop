@@ -15,6 +15,9 @@ const roadSpeed = 1.2; // Adjust for desired speed
 
 let countdownInterval = null;
 
+let lat = -27.491992; // Default latitude
+let lon = 153.040728; // Default longitude
+
 function startPolling() {
 	if (pollTimer) return; // Prevent multiple intervals
 	pollTimer = setInterval(fetchStatus, 30000);
@@ -107,7 +110,9 @@ async function fetchStatus() {
 	navigator.geolocation.getCurrentPosition(
 		pos => {
 			const { latitude, longitude } = pos.coords;
-			const loc = JSON.stringify({ lat: latitude, lon: longitude });
+			lat = latitude;
+			lon = longitude;
+			const loc = JSON.stringify({ lat, lon });
 			const encryptedLoc = xorEncrypt(loc, window.BUS_TOKEN);
 			updateSkyBySunTimes(latitude, longitude);
 
@@ -266,39 +271,64 @@ function updateSkyBySunTimes(lat, lon) {
 
 	const sun = document.getElementById('sun');
 	const moonStars = document.getElementById('moon-stars');
+	const moon = document.querySelector('#moon-stars .moon');
+	const sky = document.getElementById('sky');
 	const timesText = document.getElementById('timesText');
 
 	let bg;
-	if (now >= times.sunrise && now < times.sunset) {
+	if (now >= times.dawn && now < times.dusk) {
 		// Day
 		bg = 'linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)';
 		if (sun) sun.style.display = '';
 		if (moonStars) moonStars.style.display = 'none';
 		if (timesText) timesText.style.color = '#444';
-	} else if (
-		(now >= times.sunset && now < times.night) ||
-		(now >= times.nightEnd && now < times.sunrise)
-	) {
-		// Twilight
-		bg = 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)';
-		if (sun) sun.style.display = 'none';
-		if (moonStars) moonStars.style.display = '';
-		if (timesText) timesText.style.color = '#cfe2ff';
+
+		// --- Sun position ---
+		if (sun && sky) {
+			const sunPos = SunCalc.getPosition(now, lat, lon);
+			// Map azimuth (0 to 2PI) to left (0% to 100%)
+			const left = 50 + 45 * Math.sin(sunPos.azimuth); // -45% to +45% from center
+			// Map altitude (-PI/2 to PI/2) to top (100% to 0%)
+			const top = 80 - 60 * (sunPos.altitude / (Math.PI / 2)); // 80% (horizon) to 20% (overhead)
+			sun.style.left = `${left}%`;
+			sun.style.top = `${top}%`;
+		}
 	} else {
-		// Night
-		bg = 'linear-gradient(to bottom, #232526 0%, #414345 100%)';
 		if (sun) sun.style.display = 'none';
 		if (moonStars) moonStars.style.display = '';
-		if (timesText) timesText.style.color = '#fffbe6';
+		if (
+			(now >= times.dusk && now < times.night) ||
+			(now >= times.nightEnd && now < times.dawn)
+		) {
+			// Twilight
+			bg = 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)';
+			if (timesText) timesText.style.color = '#cfe2ff';
+		} else {
+			// Night
+			bg = 'linear-gradient(to bottom, #232526 0%, #414345 100%)';
+			if (timesText) timesText.style.color = '#fffbe6';
+		}
+
+		// --- Moon position ---
+		if (moon && sky) {
+			const moonPos = SunCalc.getMoonPosition(now, lat, lon);
+			const left = 50 + 45 * Math.sin(moonPos.azimuth);
+			const top = 80 - 60 * (moonPos.altitude / (Math.PI / 2));
+			moon.style.left = `${left}%`;
+			moon.style.top = `${top}%`;
+		}
 	}
 	document.body.style.background = bg;
 }
 
+updateSkyBySunTimes(lat, lon);
+setInterval(() => {
+	updateSkyBySunTimes(lat, lon);
+}, 60 * 1000);
+
 // Start the road animation when the page loads
 roadMoving = true;
 animateRoad();
-
-window.addEventListener('resize', () => setBusStopTransition(roadSpeed));
 
 startPolling();
 fetchStatus();
