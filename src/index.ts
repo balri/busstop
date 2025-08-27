@@ -5,7 +5,7 @@ import { generateToken } from './tokens';
 import statusRouter from './routes/status';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -26,6 +26,6 @@ app.get('/health', (req, res) => res.status(200).send('OK'));
 // Status endpoint
 app.use('/', statusRouter);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
 	console.log(`Backend listening on port ${PORT}`);
 });

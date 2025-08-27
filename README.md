@@ -26,3 +26,13 @@ Takes a screenshot of the site every hour
 ```
 0 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
 ```
+
+# Linting
+```
+npm run lint
+```
+
+# Dependency check
+```
+npx depcheck
+```
