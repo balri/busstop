@@ -9,7 +9,7 @@ const path = require('path');
 	await page.goto('https://busstop-ufgc.onrender.com/', { waitUntil: 'networkidle2' });
 
 	// Optional: set viewport size
-	await page.setViewport({ width: 1200, height: 800 });
+	await page.setViewport({ width: 375, height: 812, isMobile: true });
 
 	// Save screenshot with timestamp
 	const outDir = path.join(__dirname, '../screenshots');
