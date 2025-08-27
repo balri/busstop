@@ -287,9 +287,9 @@ function updateSkyBySunTimes(lat, lon) {
 		if (sun && sky) {
 			const sunPos = SunCalc.getPosition(now, lat, lon);
 			// Map azimuth (0 to 2PI) to left (0% to 100%)
-			const left = 50 + 45 * Math.sin(sunPos.azimuth); // -45% to +45% from center
+			const left = 50 + 40 * Math.sin(sunPos.azimuth); // -40% to +40% from center
 			// Map altitude (-PI/2 to PI/2) to top (100% to 0%)
-			const top = 80 - 60 * (sunPos.altitude / (Math.PI / 2)); // 80% (horizon) to 20% (overhead)
+			const top = 90 - 80 * (sunPos.altitude / (Math.PI / 2)); // 80% (horizon) to 20% (overhead)
 			sun.style.left = `${left}%`;
 			sun.style.top = `${top}%`;
 		}
@@ -312,8 +312,8 @@ function updateSkyBySunTimes(lat, lon) {
 		// --- Moon position ---
 		if (moon && sky) {
 			const moonPos = SunCalc.getMoonPosition(now, lat, lon);
-			const left = 50 + 45 * Math.sin(moonPos.azimuth);
-			const top = 80 - 60 * (moonPos.altitude / (Math.PI / 2));
+			const left = 50 + 40 * Math.sin(moonPos.azimuth);
+			const top = 90 - 80 * (moonPos.altitude / (Math.PI / 2));
 			moon.style.left = `${left}%`;
 			moon.style.top = `${top}%`;
 		}
