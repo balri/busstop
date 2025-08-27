@@ -1,0 +1,30 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running checks before push..."
+
+# Run tests
+echo "✅ Running tests..."
+npm test
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Aborting push."
+  exit 1
+fi
+
+# Run lint
+echo "✅ Running lint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Lint failed. Aborting push."
+  exit 1
+fi
+
+# Run depcheck
+echo "✅ Running depcheck..."
+npx depcheck
+if [ $? -ne 0 ]; then
+  echo "❌ Unused or missing dependencies found. Aborting push."
+  exit 1
+fi
+
+echo "🎉 All checks passed. Proceeding with push!"
