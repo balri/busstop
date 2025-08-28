@@ -15,7 +15,7 @@ function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 		fs.createReadStream(file)
 			.pipe(csv())
 			.on("data", (row: CsvRow) => {
-				if (row.trip_id) tripIds.add(row.trip_id);
+				if (row["trip_id"]) tripIds.add(row["trip_id"]);
 			})
 			.on("end", () => resolve(tripIds))
 			.on("error", reject);

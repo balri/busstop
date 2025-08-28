@@ -38,6 +38,7 @@ export default defineConfig([
       "indent": ["warn", "tab"],
       "simple-import-sort/imports": "warn",
       "simple-import-sort/exports": "warn",
+      "no-unused-vars": ["warn", { "args": "all", "argsIgnorePattern": "^_" }],
     },
   },
   {
@@ -55,6 +56,7 @@ export default defineConfig([
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      "@typescript-eslint/no-unused-vars": ["warn", { "args": "all", "argsIgnorePattern": "^_" }],
     },
   },
   {

@@ -2,8 +2,8 @@ import crypto from "crypto";
 
 export const tokens = new Map();
 
-const tokenExpiry = process.env.TOKEN_EXPIRY_MS
-	? Number(process.env.TOKEN_EXPIRY_MS)
+const tokenExpiry = process.env["TOKEN_EXPIRY_MS"]
+	? Number(process.env["TOKEN_EXPIRY_MS"])
 	: 15 * 60 * 1000; // 15 minutes
 
 export function generateToken(): string {

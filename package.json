@@ -7,12 +7,13 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node-dev src/index.ts",
-    "lint": "npm run eslint && npm run lint:css",
+    "lint": "npm run eslint && npm run lint:css && npm run typecheck",
     "lint:css": "stylelint '**/*.css'",
     "eslint": "eslint '**/*.{js,ts,tsx}'",
     "lint:css:fix": "stylelint '**/*.css' --fix",
     "eslint:fix": "eslint '**/*.{js,ts,tsx}' --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

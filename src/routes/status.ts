@@ -29,7 +29,7 @@ router.post("/status", async (req, res) => {
 		return res.status(400).json({ error: "Invalid coordinates" });
 	}
 
-	const minDistance = Number(process.env.MIN_DISTANCE) || 100;
+	const minDistance = Number(process.env["MIN_DISTANCE"]) || 100;
 
 	db.all(
 		"SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops",
@@ -127,9 +127,9 @@ router.post("/status", async (req, res) => {
 					}
 				}
 
-				const secretKeyword = process.env.SECRET_KEYWORD || null;
+				const secretKeyword = process.env["SECRET_KEYWORD"] || null;
 				const acceptableDelay =
-					Number(process.env.ACCEPTABLE_DELAY) || 60;
+					Number(process.env["ACCEPTABLE_DELAY"]) || 60;
 
 				if (nextBus && nextBus.tripId) {
 					getScheduledTime(nextBus.tripId, stopId)
@@ -175,22 +175,26 @@ router.post("/status", async (req, res) => {
 								response.keyword = secretKeyword;
 							}
 
-							return res.json(response);
+							res.json(response);
+							return;
 						})
-						.catch(() =>
-							res.status(500).json({ error: "DB error" }),
-						);
+						.catch(() => {
+							res.status(500).json({ error: "DB error" });
+							return;
+						});
 				} else {
-					return res.json({ status: "no_service" });
+					res.json({ status: "no_service" });
+					return;
 				}
 			} catch (e) {
 				console.error("Failed to fetch GTFS-RT feed:", e);
-				return res
-					.status(500)
-					.json({ error: "Failed to fetch GTFS-RT feed" });
+				res.status(500).json({ error: "Failed to fetch GTFS-RT feed" });
+				return;
 			}
+			return;
 		},
 	);
+	return;
 });
 
 export default router;

@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
 	const token = generateToken();
 	fs.readFile(
 		path.join(__dirname, "../public/index.template.html"),
@@ -21,12 +21,12 @@ app.get("/", (req, res) => {
 				"</head>",
 				`<script>window.BUS_TOKEN="${token}"</script></head>`,
 			);
-			res.send(htmlWithToken);
+			return res.send(htmlWithToken);
 		},
 	);
 });
 
-app.get("/health", (req, res) => res.status(200).send("OK"));
+app.get("/health", (_req, res) => res.status(200).send("OK"));
 app.use("/", statusRouter);
 
 export default app;
