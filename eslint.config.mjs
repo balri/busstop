@@ -4,9 +4,42 @@ import tsParser from "@typescript-eslint/parser";
 import globals from "globals";
 import { defineConfig } from "eslint/config";
 import jest from "eslint-plugin-jest";
+import prettier from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
 
 export default defineConfig([
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["public/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        ...globals.browser,
+        SunCalc: "readonly",
+      },
+    },
+  },
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: globals.node,
+    },
+  },
   js.configs.recommended,
+  {
+    files: ["**/*.{js,ts,tsx}"],
+    plugins: { prettier, "simple-import-sort": simpleImportSort },
+    rules: {
+      "prettier/prettier": "warn",
+      "indent": ["warn", "tab"],
+      "simple-import-sort/imports": "warn",
+      "simple-import-sort/exports": "warn",
+    },
+  },
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -37,4 +70,5 @@ export default defineConfig([
       ...jest.configs.recommended.rules,
     },
   },
+  prettierConfig,
 ]);

@@ -1,4 +1,3 @@
-
 export interface NearestStop {
 	stopId: string;
 	stopName: string;

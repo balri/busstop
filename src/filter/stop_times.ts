@@ -1,15 +1,16 @@
-import fs from 'fs';
-import path from 'path';
-import csv from 'csv-parser';
-import { StopTime, StopTimes, Trip } from './types';
+import csv from "csv-parser";
+import fs from "fs";
+import path from "path";
 
-const TARGET_ROUTE_ID = '61-4158';
+import { StopTime, StopTimes, Trip } from "./types";
 
-const GTFS_DIR = '../../feeds'; // Folder where your GTFS files live (trips.txt, stop_times.txt)
-const OUTPUT_FILE = '../../feeds/stop_times_filtered.csv'; // Output CSV file
+const TARGET_ROUTE_ID = "61-4158";
 
-const tripsFile = path.join(GTFS_DIR, 'trips.txt');
-const stopTimesFile = path.join(GTFS_DIR, 'stop_times.txt');
+const GTFS_DIR = "../../feeds"; // Folder where your GTFS files live (trips.txt, stop_times.txt)
+const OUTPUT_FILE = "../../feeds/stop_times_filtered.csv"; // Output CSV file
+
+const tripsFile = path.join(GTFS_DIR, "trips.txt");
+const stopTimesFile = path.join(GTFS_DIR, "stop_times.txt");
 
 async function parseTrips(): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
@@ -17,16 +18,18 @@ async function parseTrips(): Promise<Set<string>> {
 
 		fs.createReadStream(tripsFile)
 			.pipe(csv())
-			.on('data', (row: Trip) => {
+			.on("data", (row: Trip) => {
 				if (row.route_id === TARGET_ROUTE_ID && row.trip_id) {
 					tripIds.add(row.trip_id);
 				}
 			})
-			.on('end', () => {
-				console.log(`Found ${tripIds.size} trips for route ${TARGET_ROUTE_ID}`);
+			.on("end", () => {
+				console.log(
+					`Found ${tripIds.size} trips for route ${TARGET_ROUTE_ID}`,
+				);
 				resolve(tripIds);
 			})
-			.on('error', reject);
+			.on("error", reject);
 	});
 }
 
@@ -36,23 +39,25 @@ async function filterStopTimes(tripIds: Set<string>): Promise<StopTimes> {
 
 		fs.createReadStream(stopTimesFile)
 			.pipe(csv())
-			.on('data', (row: StopTime) => {
+			.on("data", (row: StopTime) => {
 				if (row.trip_id && tripIds.has(row.trip_id)) {
 					// Keep all stop_ids for the route
 					filtered.push({
-						trip_id: row.trip_id ?? '',
-						arrival_time: row.arrival_time ?? '',
-						departure_time: row.departure_time ?? '',
-						stop_id: row.stop_id ?? '',
-						stop_sequence: row.stop_sequence ?? ''
+						trip_id: row.trip_id ?? "",
+						arrival_time: row.arrival_time ?? "",
+						departure_time: row.departure_time ?? "",
+						stop_id: row.stop_id ?? "",
+						stop_sequence: row.stop_sequence ?? "",
 					});
 				}
 			})
-			.on('end', () => {
-				console.log(`Filtered ${filtered.length} stop_times rows for route ${TARGET_ROUTE_ID}`);
+			.on("end", () => {
+				console.log(
+					`Filtered ${filtered.length} stop_times rows for route ${TARGET_ROUTE_ID}`,
+				);
 				resolve(filtered);
 			})
-			.on('error', reject);
+			.on("error", reject);
 	});
 }
 
@@ -62,14 +67,16 @@ async function main(): Promise<void> {
 		const filteredStopTimes = await filterStopTimes(tripIds);
 
 		// Write CSV header
-		const header = 'trip_id,arrival_time,departure_time,stop_id,stop_sequence\n';
-		const rows = filteredStopTimes.map((row: StopTime) =>
-			`${row.trip_id},${row.arrival_time},${row.departure_time},${row.stop_id},${row.stop_sequence}`
+		const header =
+			"trip_id,arrival_time,departure_time,stop_id,stop_sequence\n";
+		const rows = filteredStopTimes.map(
+			(row: StopTime) =>
+				`${row.trip_id},${row.arrival_time},${row.departure_time},${row.stop_id},${row.stop_sequence}`,
 		);
-		fs.writeFileSync(OUTPUT_FILE, header + rows.join('\n'));
+		fs.writeFileSync(OUTPUT_FILE, header + rows.join("\n"));
 		console.log(`Exported filtered stop times to ${OUTPUT_FILE}`);
 	} catch (err) {
-		console.error('Error during export:', err);
+		console.error("Error during export:", err);
 	}
 }
 

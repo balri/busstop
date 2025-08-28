@@ -1,4 +1,3 @@
-
 export interface DbTable {
 	name: string;
 	file: string;

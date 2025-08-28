@@ -1,9 +1,9 @@
-const statusText = document.getElementById('statusText');
-const busIcon = document.getElementById('busIcon');
-const road = document.querySelector('.road');
-const busStop = document.getElementById('bus-stop');
-const timesText = document.getElementById('timesText');
-const busStopName = document.getElementById('busStopName');
+const statusText = document.getElementById("statusText");
+const busIcon = document.getElementById("busIcon");
+const road = document.querySelector(".road");
+const busStop = document.getElementById("bus-stop");
+const timesText = document.getElementById("timesText");
+const busStopName = document.getElementById("busStopName");
 
 let currentStatus = null;
 let pollTimer = null;
@@ -32,30 +32,34 @@ function stopPolling() {
 
 function secondsToHHMMSS(seconds) {
 	const date = new Date(seconds * 1000);
-	return date.toLocaleTimeString('en-US', {
-		hour: 'numeric',
-		minute: '2-digit',
-		hour12: true
+	return date.toLocaleTimeString("en-US", {
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
 	});
 }
 
 function animateRoad() {
 	if (!roadMoving) return;
 	roadBgPos -= roadSpeed;
-	road.style.setProperty('--road-bg-x', `${roadBgPos}px`);
+	road.style.setProperty("--road-bg-x", `${roadBgPos}px`);
 	roadAnimId = requestAnimationFrame(animateRoad);
 }
 
 function showBusStopAndStopRoad(data) {
 	setBusStopTransition(roadSpeed);
-	busStop.classList.remove('visible');
-	busStop.classList.remove('hidden');
+	busStop.classList.remove("visible");
+	busStop.classList.remove("hidden");
 	setTimeout(() => {
-		busStop.classList.add('visible');
+		busStop.classList.add("visible");
 	}, 20);
-	busStop.addEventListener('transitionend', () => {
-		stopRoad(data)
-	}, { once: true });
+	busStop.addEventListener(
+		"transitionend",
+		() => {
+			stopRoad(data);
+		},
+		{ once: true },
+	);
 }
 
 function stopRoad(data) {
@@ -64,9 +68,9 @@ function stopRoad(data) {
 		cancelAnimationFrame(roadAnimId);
 		if (data?.keyword) {
 			updateMessages(
-				data.stopName || 'Bus Status',
+				data.stopName || "Bus Status",
 				currentStatus,
-				'The bus has arrived!<br>Your keyword is: ' + data.keyword
+				"The bus has arrived!<br>Your keyword is: " + data.keyword,
 			);
 		}
 		roadAnimId = null;
@@ -80,14 +84,16 @@ function stopEverything() {
 		clearInterval(countdownInterval);
 		countdownInterval = null;
 	}
-	busIcon.classList.add('hidden');
-	busStop.classList.add('hidden');
+	busIcon.classList.add("hidden");
+	busStop.classList.add("hidden");
 }
 
 function xorEncrypt(text, key) {
-	let result = '';
+	let result = "";
 	for (let i = 0; i < text.length; i++) {
-		result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+		result += String.fromCharCode(
+			text.charCodeAt(i) ^ key.charCodeAt(i % key.length),
+		);
 	}
 	return btoa(result); // base64 encode for safe transport
 }
@@ -100,15 +106,15 @@ function updateMessages(busStop, status, message) {
 
 function displayDistance(distance) {
 	if (distance >= 1000) {
-		return (distance / 1000).toFixed(2) + 'km';
+		return (distance / 1000).toFixed(2) + "km";
 	} else {
-		return distance + 'm';
+		return distance + "m";
 	}
 }
 
 async function fetchStatus() {
 	navigator.geolocation.getCurrentPosition(
-		pos => {
+		(pos) => {
 			const { latitude, longitude } = pos.coords;
 			lat = latitude;
 			lon = longitude;
@@ -116,32 +122,36 @@ async function fetchStatus() {
 			const encryptedLoc = xorEncrypt(loc, window.BUS_TOKEN);
 			updateSkyBySunTimes(latitude, longitude);
 
-			fetch('/status', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ loc: encryptedLoc, token: window.BUS_TOKEN })
+			fetch("/status", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					loc: encryptedLoc,
+					token: window.BUS_TOKEN,
+				}),
 			})
-				.then(res => {
+				.then((res) => {
 					if (res.status === 404) {
-						res.json().then(data => {
+						res.json().then((data) => {
 							if (data.nearest) {
-								const { stopName, stopLat, stopLon, distance } = data.nearest;
+								const { stopName, stopLat, stopLon, distance } =
+									data.nearest;
 								updateMessages(
-									'No Nearby Bus Stop',
-									'NO BUS STOP',
+									"No Nearby Bus Stop",
+									"NO BUS STOP",
 									`
 										Closest stop: <b>${stopName}</b><br>
 										Distance: <b>${displayDistance(distance)}</b><br>
 										<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
 											View in Google Maps
 										</a>
-									`
+									`,
 								);
 							} else {
 								updateMessages(
-									'No Nearby Bus Stop',
-									'NO BUS STOP',
-									'Please go to a bus stop and try again.'
+									"No Nearby Bus Stop",
+									"NO BUS STOP",
+									"Please go to a bus stop and try again.",
 								);
 							}
 							stopEverything();
@@ -150,59 +160,63 @@ async function fetchStatus() {
 					}
 					if (res.status === 403) {
 						updateMessages(
-							'Session Expired',
-							'SESSION EXPIRED',
-							'Please refresh the page to continue.'
+							"Session Expired",
+							"SESSION EXPIRED",
+							"Please refresh the page to continue.",
 						);
 						stopEverything();
 						return null;
 					}
 					return res.json();
 				})
-				.then(data => {
+				.then((data) => {
 					if (!data) return;
 
-					if (!data.estimatedTime || !data.scheduledTime || data.status === 'no_service') {
+					if (
+						!data.estimatedTime ||
+						!data.scheduledTime ||
+						data.status === "no_service"
+					) {
 						updateMessages(
-							data.stopName || 'Bus Status',
-							'NO SERVICE',
+							data.stopName || "Bus Status",
+							"NO SERVICE",
 							`
 							The service is not currently running.<br>
 							Please check back later.
-						`
+						`,
 						);
 
 						stopEverything();
 						return;
 					}
 
-					busIcon.classList.remove('hidden');
+					busIcon.classList.remove("hidden");
 					if (data.keyword) {
 						stopPolling();
 					}
 					startCountdown(data);
 				})
-				.catch(e => {
+				.catch((e) => {
 					console.error(e);
 					updateMessages(
-						data.stopName || 'Bus Status',
-						'ERROR',
+						"Bus Status",
+						"ERROR",
 						`
 						Error loading status.<br>
 						Please try again later.
-						`
+						`,
 					);
 					stopEverything();
 				});
 		},
-		err => {
+		() => {
 			updateMessages(
-				'Could not get your location',
-				'NO LOCATION',
-				'Location access is required to find nearby bus stops.'
+				"Could not get your location",
+				"NO LOCATION",
+				"Location access is required to find nearby bus stops.",
 			);
 			stopEverything();
-		}
+		},
 	);
 }
 
@@ -211,7 +225,9 @@ function setBusStopTransition(roadSpeed) {
 	// Get the offset in px (2rem or 1.2rem depending on screen size)
 	const style = getComputedStyle(document.documentElement);
 	const rem = parseFloat(style.fontSize);
-	const offsetPx = window.matchMedia('(max-width: 600px)').matches ? 1.2 * rem : 2 * rem;
+	const offsetPx = window.matchMedia("(max-width: 600px)").matches
+		? 1.2 * rem
+		: 2 * rem;
 
 	const stopFinal = vw / 2 + offsetPx;
 	const distance = vw - stopFinal;
@@ -228,29 +244,29 @@ function startCountdown(data) {
 
 	function updateCountdown() {
 		const scheduled = secondsToHHMMSS(data.scheduledTime);
-		currentStatus = data.status.replace('_', ' ');
+		currentStatus = data.status.replace("_", " ");
 		const now = Math.floor(Date.now() / 1000);
 		let diff = data.estimatedTime - now;
 		if (diff < 0) diff = 0;
 		const mins = Math.floor(diff / 60);
 		const secs = diff % 60;
 
-		let delayMsg = '';
+		let delayMsg = "";
 		const delayMins = Math.round(data.delay / 60);
-		if (data.status == 'late') {
+		if (data.status == "late") {
 			delayMsg = `${delayMins} min `;
-		} else if (data.status == 'early') {
+		} else if (data.status == "early") {
 			delayMsg = `${Math.abs(delayMins)} min `;
 		}
 		updateMessages(
-			data.stopName || 'Bus Status',
+			data.stopName || "Bus Status",
 			currentStatus,
 			`
 				The bus scheduled to arrive at<br>
 				<b>${scheduled}</b><br>
 				is ${delayMsg}${currentStatus} and will arrive in:<br>
-				<b>${mins}m ${secs.toString().padStart(2, '0')}s</b>
-			`
+				<b>${mins}m ${secs.toString().padStart(2, "0")}s</b>
+			`,
 		);
 		if (diff === 0) {
 			clearInterval(countdownInterval);
@@ -266,22 +282,24 @@ function startCountdown(data) {
 }
 
 function updateSkyBySunTimes(lat, lon) {
-	const now = new Date();
+	// test specific time
+	const now = new Date("2023-10-01T19:30:00");
+	// const now = new Date();
 	const times = SunCalc.getTimes(now, lat, lon);
 
-	const sun = document.getElementById('sun');
-	const moonStars = document.getElementById('moon-stars');
-	const moon = document.querySelector('#moon-stars .moon');
-	const sky = document.getElementById('sky');
-	const timesText = document.getElementById('timesText');
+	const sun = document.getElementById("sun");
+	const moonStars = document.getElementById("moon-stars");
+	const moon = document.querySelector("#moon-stars .moon");
+	const sky = document.getElementById("sky");
+	const timesText = document.getElementById("timesText");
 
 	let bg;
 	if (now >= times.dawn && now < times.dusk) {
 		// Day
-		bg = 'linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)';
-		if (sun) sun.style.display = '';
-		if (moonStars) moonStars.style.display = 'none';
-		if (timesText) timesText.style.color = '#444';
+		bg = "linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)";
+		if (sun) sun.style.display = "";
+		if (moonStars) moonStars.style.display = "none";
+		if (timesText) timesText.style.color = "#444";
 
 		// --- Sun position ---
 		if (sun && sky) {
@@ -294,19 +312,19 @@ function updateSkyBySunTimes(lat, lon) {
 			sun.style.top = `${top}%`;
 		}
 	} else {
-		if (sun) sun.style.display = 'none';
-		if (moonStars) moonStars.style.display = '';
+		if (sun) sun.style.display = "none";
+		if (moonStars) moonStars.style.display = "";
 		if (
 			(now >= times.dusk && now < times.night) ||
 			(now >= times.nightEnd && now < times.dawn)
 		) {
 			// Twilight
-			bg = 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)';
-			if (timesText) timesText.style.color = '#cfe2ff';
+			bg = "linear-gradient(to bottom, #415a77 0%, #778da9 100%)";
+			if (timesText) timesText.style.color = "#cfe2ff";
 		} else {
 			// Night
-			bg = 'linear-gradient(to bottom, #232526 0%, #414345 100%)';
-			if (timesText) timesText.style.color = '#fffbe6';
+			bg = "linear-gradient(to bottom, #232526 0%, #414345 100%)";
+			if (timesText) timesText.style.color = "#fffbe6";
 		}
 
 		// --- Moon position ---
@@ -350,7 +368,7 @@ startPolling();
 fetchStatus();
 
 // On initial render:
-busStop.classList.add('no-transition');
+busStop.classList.add("no-transition");
 setTimeout(() => {
-	busStop.classList.remove('no-transition');
+	busStop.classList.remove("no-transition");
 }, 100);
