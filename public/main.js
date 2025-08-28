@@ -281,8 +281,15 @@ function startCountdown(data) {
 	countdownInterval = setInterval(updateCountdown, 1000);
 }
 
+function getMockTime() {
+	const url = new URL(window.location.href);
+	const mock = url.searchParams.get("mockTime");
+	return mock ? new Date(mock) : new Date();
+}
+
+// Replace all `new Date()` with `getMockTime()` in updateSkyBySunTimes
 function updateSkyBySunTimes(lat, lon) {
-	const now = new Date();
+	const now = getMockTime();
 	const times = SunCalc.getTimes(now, lat, lon);
 
 	const sun = document.getElementById("sun");

@@ -22,9 +22,9 @@ TOKEN_EXPIRY_MS=900000 // 15 minutes
 
 # Puppeteer
 
-Takes a screenshot of the site every hour
+Takes a screenshot of the site every hour by sending a mock date query param
 ```
-0 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
+node scripts/screenshot.js
 ```
 
 # Linting
