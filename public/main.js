@@ -25,10 +25,19 @@ function startPolling() {
 
 function stopPolling() {
 	if (pollTimer) {
-		clearInterval(pollTimer);
+		clearTimeout(pollTimer);
 		pollTimer = null;
 	}
 }
+
+// Listen for tab visibility changes
+document.addEventListener("visibilitychange", () => {
+	if (document.hidden) {
+		stopPolling();
+	} else {
+		startPolling();
+	}
+});
 
 function secondsToHHMMSS(seconds) {
 	const date = new Date(seconds * 1000);
@@ -273,6 +282,16 @@ function startCountdown(data) {
 
 			if (data.keyword) {
 				showBusStopAndStopRoad(data);
+			} else {
+				// No keyword, likely due to polling being paused
+				updateMessages(
+					data.stopName || "Bus Status",
+					"REFRESH REQUIRED",
+					`
+                        The countdown has finished, but the page was inactive.<br>
+                        Please refresh the page to continue.
+                    `
+				);
 			}
 		}
 	}
