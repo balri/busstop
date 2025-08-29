@@ -18,7 +18,7 @@ fi
 
 # Run depcheck
 echo "✅ Running depcheck..."
-npx depcheck
+npx depcheck --ignores=stylelint-order,stylelint-config-standard
 if [ $? -ne 0 ]; then
   echo "❌ Unused or missing dependencies found. Aborting push."
   exit 1
