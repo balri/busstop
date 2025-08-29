@@ -36,3 +36,11 @@ npm run lint
 ```
 npx depcheck
 ```
+
+# Puppeteer
+
+Takes a screenshot of the site every hour
+
+```
+0 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
+```

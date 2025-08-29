@@ -2,36 +2,44 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 
+const website = "http://localhost:3000/";
+
 (async () => {
 	const browser = await puppeteer.launch({
-		args: ["--no-sandbox", "--disable-setuid-sandbox"],
+		args: [
+			"--no-sandbox",
+			"--disable-setuid-sandbox",
+			"--use-fake-ui-for-media-stream",
+			"--enable-geolocation",
+		],
 	});
 	const page = await browser.newPage();
+
+	// Set geolocation permissions for your app's origin
+	await page.goto(website);
+	const context = browser.defaultBrowserContext();
+	await context.overridePermissions(website, ["geolocation"]);
+
+	// Set your desired location
+	await page.setGeolocation({ latitude: -27.491992, longitude: 153.040728 });
+
 	await page.setViewport({ width: 375, height: 812, isMobile: true });
 
 	const outDir = path.join(__dirname, "../screenshots");
 	if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 
-	// Set your time range
-	const start = new Date("2024-02-28T00:00:00Z");
-	const end = new Date("2024-02-28T23:00:00Z");
-	const intervalHours = 1;
+	const now = new Date();
+	const iso = now.toISOString();
+	const filename = `screenshot-${iso.replace(/[:.]/g, "-")}.png`;
 
-	for (
-		let t = new Date(start);
-		t <= end;
-		t.setHours(t.getHours() + intervalHours)
-	) {
-		const iso = t.toISOString();
-		const url = `http://localhost:3000/?mockTime=${encodeURIComponent(iso)}`;
-		await page.goto(url, { waitUntil: "networkidle2" });
-		// Wait for rendering if needed
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+	// Reload the page to ensure location is used from the start
+	await page.goto(website, { waitUntil: "networkidle2" });
 
-		const filename = `screenshot-${iso.replace(/[:.]/g, "-")}.png`;
-		await page.screenshot({ path: path.join(outDir, filename) });
-		console.log(`Saved screenshot for ${iso}`);
-	}
+	// Wait for your app to render (increase timeout if needed)
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+
+	await page.screenshot({ path: path.join(outDir, filename) });
+	console.log(`Saved screenshot for ${iso}`);
 
 	await browser.close();
 })();
