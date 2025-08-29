@@ -18,3 +18,28 @@ export function getScheduledTime(
 		);
 	});
 }
+
+export function getScheduledArrivalsForStop(
+	stopId: string,
+	routeId: string,
+	startTime: string,
+	endTime: string,
+): Promise<{ trip_id: string; arrival_time: string }[]> {
+	return new Promise((resolve, reject) => {
+		db.all(
+			`SELECT trip_id, arrival_time FROM stop_times
+             WHERE stop_id = ?
+             AND arrival_time BETWEEN ? AND ?
+             AND trip_id IN (SELECT trip_id FROM trips WHERE route_id = ?)
+			 ORDER BY arrival_time ASC`,
+			[stopId, startTime, endTime, routeId],
+			(
+				err: Error | null,
+				rows: { trip_id: string; arrival_time: string }[] | undefined,
+			) => {
+				if (err) return reject(err);
+				resolve(rows || []);
+			},
+		);
+	});
+}

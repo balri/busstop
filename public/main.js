@@ -263,20 +263,27 @@ function startCountdown(data) {
 		let delayMsg = "";
 		const delayMins = Math.round(data.delay / 60);
 		if (data.status == "late") {
-			delayMsg = `${delayMins} min `;
+			delayMsg = `${delayMins} min ${currentStatus}`;
 		} else if (data.status == "early") {
-			delayMsg = `${Math.abs(delayMins)} min `;
+			delayMsg = `${Math.abs(delayMins)} min ${currentStatus}`;
+		} else if (data.status === "missing_trip") {
+			delayMsg = "unknown";
+			currentStatus = "NO REAL-TIME INFO";
+		} else {
+			delayMsg = currentStatus;
 		}
+
 		updateMessages(
 			data.stopName || "Bus Status",
 			currentStatus,
 			`
 				The bus scheduled to arrive at<br>
 				<b>${scheduled}</b><br>
-				is ${delayMsg}${currentStatus} and will arrive in:<br>
+				is ${delayMsg} and will arrive in:<br>
 				<b>${mins}m ${secs.toString().padStart(2, "0")}s</b>
 			`,
 		);
+
 		if (diff === 0) {
 			clearInterval(countdownInterval);
 

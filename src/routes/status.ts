@@ -2,7 +2,7 @@ import axios from "axios";
 import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 
-import { db, getScheduledTime } from "../db";
+import { db, getScheduledArrivalsForStop, getScheduledTime } from "../db";
 import { validateToken } from "../tokens";
 import { haversine, scheduledTimeToUnix, xorDecrypt } from "../utils";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
@@ -99,6 +99,59 @@ router.post("/status", async (req, res) => {
 						},
 					}));
 
+				const secretKeyword = process.env["SECRET_KEYWORD"] || null;
+				const acceptableDelay =
+					Number(process.env["ACCEPTABLE_DELAY"]) || 60;
+
+				const windowSeconds = 30 * 60; // 30 minutes
+				const startTimeStr = new Date((now - 60) * 1000)
+					.toISOString()
+					.substr(11, 8); // "HH:MM:SS"
+				const endTimeStr = new Date((now + windowSeconds) * 1000)
+					.toISOString()
+					.substr(11, 8);
+
+				const scheduledArrivals = await getScheduledArrivalsForStop(
+					stopId,
+					TARGET_ROUTE_ID,
+					startTimeStr,
+					endTimeStr,
+				);
+
+				// Find the earliest scheduled arrival
+				const nextScheduled = scheduledArrivals
+					.map((s) => ({ ...s, arrivalTime: Number(s.arrival_time) }))
+					.filter((s) => !isNaN(s.arrivalTime))
+					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
+
+				if (nextScheduled) {
+					const realtimeTripIds = new Set(
+						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
+					);
+
+					if (!realtimeTripIds.has(nextScheduled.trip_id)) {
+						// The next scheduled trip is missing from the real-time feed
+						const response: StatusResponse = {
+							status: "missing_trip",
+							scheduledTime: nextScheduled.arrivalTime,
+							stopName: nearest.stopName,
+							estimatedTime: nextScheduled.arrivalTime,
+							delay: null,
+						};
+
+						// Only return keyword if within 1 minute of arrival time
+						if (
+							nextScheduled.arrivalTime &&
+							Math.abs(now - nextScheduled.arrivalTime) <= 60
+						) {
+							response.keyword = secretKeyword;
+						}
+
+						res.json(response);
+						return;
+					}
+				}
+
 				for (const entity of filteredEntities) {
 					const trip = entity.tripUpdate.trip;
 					for (const stopTimeUpdate of entity.tripUpdate
@@ -113,7 +166,7 @@ router.post("/status", async (req, res) => {
 								: null;
 						if (
 							typeof arrivalTime !== "number" ||
-							arrivalTime < now
+							arrivalTime < now - 60
 						)
 							continue;
 						if (!nextBus || arrivalTime < nextBus.arrivalTime) {
@@ -126,10 +179,6 @@ router.post("/status", async (req, res) => {
 						}
 					}
 				}
-
-				const secretKeyword = process.env["SECRET_KEYWORD"] || null;
-				const acceptableDelay =
-					Number(process.env["ACCEPTABLE_DELAY"]) || 60;
 
 				if (nextBus && nextBus.tripId) {
 					getScheduledTime(nextBus.tripId, stopId)
