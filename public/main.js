@@ -290,7 +290,7 @@ function startCountdown(data) {
 					`
                         The countdown has finished, but the page was inactive.<br>
                         Please refresh the page to continue.
-                    `
+                    `,
 				);
 			}
 		}
