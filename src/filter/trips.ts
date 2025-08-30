@@ -9,7 +9,7 @@ const TRIPS_FILE = path.join("../../feeds", "trips.txt");
 const OUTPUT_FILE = "../../feeds/trips_filtered.csv";
 
 // 1. Read trip_ids from stop_times_filtered.csv
-function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
+export function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
 		const tripIds = new Set<string>();
 		fs.createReadStream(file)
@@ -23,7 +23,7 @@ function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
 }
 
 // 2. Filter trips.txt to just those trip_ids
-function filterTrips(
+export function filterTrips(
 	tripIds: Set<string>,
 ): Promise<{ header: CsvHeader; filtered: CsvRows }> {
 	return new Promise((resolve, reject) => {
@@ -44,7 +44,7 @@ function filterTrips(
 }
 
 // 3. Write filtered trips to CSV
-function writeCsv(
+export function writeCsv(
 	header: CsvHeader,
 	rows: CsvRows,
 	file: fs.PathOrFileDescriptor,
@@ -73,4 +73,7 @@ async function main(): Promise<void> {
 	}
 }
 
-main();
+if (require.main === module) {
+	// Only run if called directly, not when imported for tests
+	main();
+}

@@ -8,7 +8,7 @@ import { CsvRow, DbTable } from "./types";
 const DB_FILE = path.join("../", "gtfs.db");
 const FEEDS_DIR = "../../feeds";
 
-const TABLES: DbTable[] = [
+export const TABLES: DbTable[] = [
 	{
 		name: "stop_times",
 		file: "stop_times_filtered.csv",
@@ -52,7 +52,7 @@ const TABLES: DbTable[] = [
 	},
 ];
 
-function importCsvToTable(
+export function importCsvToTable(
 	db: sqlite3.Database,
 	table: DbTable,
 	filePath: fs.PathLike,
@@ -108,4 +108,7 @@ async function main(): Promise<void> {
 	}
 }
 
-main();
+if (require.main === module) {
+	// Only run if called directly, not when imported for tests
+	main();
+}

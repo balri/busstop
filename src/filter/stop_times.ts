@@ -12,7 +12,12 @@ const OUTPUT_FILE = "../../feeds/stop_times_filtered.csv"; // Output CSV file
 const tripsFile = path.join(GTFS_DIR, "trips.txt");
 const stopTimesFile = path.join(GTFS_DIR, "stop_times.txt");
 
-async function parseTrips(): Promise<Set<string>> {
+const outputDir = path.dirname(OUTPUT_FILE);
+if (!fs.existsSync(outputDir)) {
+	fs.mkdirSync(outputDir, { recursive: true });
+}
+
+export async function parseTrips(): Promise<Set<string>> {
 	return new Promise((resolve, reject) => {
 		const tripIds = new Set<string>();
 
@@ -33,7 +38,9 @@ async function parseTrips(): Promise<Set<string>> {
 	});
 }
 
-async function filterStopTimes(tripIds: Set<string>): Promise<StopTimes> {
+export async function filterStopTimes(
+	tripIds: Set<string>,
+): Promise<StopTimes> {
 	return new Promise((resolve, reject) => {
 		const filtered: StopTimes = [];
 
@@ -80,4 +87,7 @@ async function main(): Promise<void> {
 	}
 }
 
-main();
+if (require.main === module) {
+	// Only run if called directly, not when imported for tests
+	main();
+}
