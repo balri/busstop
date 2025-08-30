@@ -1,74 +1,46 @@
 import csv from "csv-parser";
 import fs from "fs";
-import path from "path";
 
-import { CsvHeader, CsvRows } from "./types";
+import { getStopIds } from "./stop_times";
+import {
+	CsvRow,
+	Stop,
+	Stops,
+	STOPS_INPUT_FILE,
+	STOPS_OUTPUT_FILE,
+} from "./types";
+import { writeJson } from "./utils";
 
-const STOP_TIMES_FILE = "../../feeds/stop_times_filtered.csv";
-const STOPS_FILE = path.join("../../feeds", "stops.txt");
-const OUTPUT_FILE = "../../feeds/stops_filtered.csv";
-
-// 1. Read stop_ids from stop_times_filtered.csv
-export function getStopIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
-	return new Promise((resolve, reject) => {
-		const stopIds = new Set<string>();
-		fs.createReadStream(file)
-			.pipe(csv())
-			.on("data", (row: { stop_id: string }) => {
-				if (row.stop_id) stopIds.add(row.stop_id);
-			})
-			.on("end", () => resolve(stopIds))
-			.on("error", reject);
-	});
-}
-
-// 2. Filter stops.txt to just those stop_ids
-export function filterStops(
+export async function filterStops(
 	stopIds: Set<string>,
-): Promise<{ header: CsvHeader; filtered: CsvRows }> {
+): Promise<{ data: Stops }> {
 	return new Promise((resolve, reject) => {
-		const filtered: CsvRows = [];
-		let header: CsvHeader = [];
-		fs.createReadStream(STOPS_FILE)
+		const filtered: Stops = [];
+		fs.createReadStream(STOPS_INPUT_FILE)
 			.pipe(csv())
-			.on("headers", (headers: CsvHeader) => {
-				header = headers;
+			.on("data", (row: CsvRow) => {
+				if (row["stop_id"] && stopIds.has(row["stop_id"])) {
+					const filteredRow: Stop = {
+						stopId: row["stop_id"] || "",
+						stopName: row["stop_name"] || "",
+						stopLat: row["stop_lat"] || "",
+						stopLon: row["stop_lon"] || "",
+					};
+					filtered.push(filteredRow);
+				}
 			})
-			.on("data", (row: { stop_id: string }) => {
-				if (row.stop_id && stopIds.has(row.stop_id)) filtered.push(row);
-			})
-			.on("end", () => resolve({ header, filtered }))
+			.on("end", () => resolve({ data: filtered }))
 			.on("error", reject);
 	});
-}
-
-// 3. Write filtered stops to CSV
-export function writeCsv(
-	header: CsvHeader,
-	rows: CsvRows,
-	file: fs.PathOrFileDescriptor,
-): void {
-	const out = [header.join(",")];
-	for (const row of rows) {
-		out.push(
-			header
-				.map(
-					(h: string | number) =>
-						`"${(row[h] || "").replace(/"/g, '""')}"`,
-				)
-				.join(","),
-		);
-	}
-	fs.writeFileSync(file, out.join("\n"));
 }
 
 async function main(): Promise<void> {
 	try {
-		const stopIds = await getStopIdsFromCsv(STOP_TIMES_FILE);
-		const { header, filtered } = await filterStops(stopIds);
-		writeCsv(header, filtered, OUTPUT_FILE);
+		const stopIds = await getStopIds();
+		const { data } = await filterStops(stopIds);
+		writeJson(data, STOPS_OUTPUT_FILE);
 		console.log(
-			`Filtered stops written to ${OUTPUT_FILE} (${filtered.length} stops)`,
+			`Filtered stops written to ${STOPS_OUTPUT_FILE} (${data.length} rows)`,
 		);
 	} catch (err) {
 		console.error("Error:", err);
@@ -76,6 +48,5 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-	// Only run if called directly, not when imported for tests
-	main();
+	main().then(() => process.exit(0));
 }

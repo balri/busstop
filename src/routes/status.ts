@@ -10,7 +10,7 @@ import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
 const router = express.Router();
 const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
-const TARGET_ROUTE_ID = "61-4158";
+export const TARGET_ROUTE_ID = "61-4158";
 
 router.post("/status", async (req, res) => {
 	const { loc, token } = req.body;

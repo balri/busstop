@@ -1,72 +1,64 @@
 import csv from "csv-parser";
 import fs from "fs";
-import path from "path";
 
-import { CsvHeader, CsvRow, CsvRows } from "./types";
+import { TARGET_ROUTE_ID } from "../routes/status";
+import {
+	CsvRow,
+	Trip,
+	Trips,
+	TRIPS_INPUT_FILE,
+	TRIPS_OUTPUT_FILE,
+} from "./types";
+import { writeJson } from "./utils";
 
-const STOP_TIMES_FILE = "../../feeds/stop_times_filtered.csv";
-const TRIPS_FILE = path.join("../../feeds", "trips.txt");
-const OUTPUT_FILE = "../../feeds/trips_filtered.csv";
-
-// 1. Read trip_ids from stop_times_filtered.csv
-export function getTripIdsFromCsv(file: fs.PathLike): Promise<Set<string>> {
-	return new Promise((resolve, reject) => {
-		const tripIds = new Set<string>();
-		fs.createReadStream(file)
-			.pipe(csv())
-			.on("data", (row: CsvRow) => {
-				if (row["trip_id"]) tripIds.add(row["trip_id"]);
-			})
-			.on("end", () => resolve(tripIds))
-			.on("error", reject);
-	});
-}
-
-// 2. Filter trips.txt to just those trip_ids
-export function filterTrips(
-	tripIds: Set<string>,
-): Promise<{ header: CsvHeader; filtered: CsvRows }> {
-	return new Promise((resolve, reject) => {
-		const filtered: CsvRows = [];
-		let header: CsvHeader = [];
-		fs.createReadStream(TRIPS_FILE)
-			.pipe(csv())
-			.on("headers", (headers: CsvHeader) => {
-				header = headers;
-			})
-			.on("data", (row: CsvRow) => {
-				if (row["trip_id"] && tripIds.has(row["trip_id"]))
-					filtered.push(row);
-			})
-			.on("end", () => resolve({ header, filtered }))
-			.on("error", reject);
-	});
-}
-
-// 3. Write filtered trips to CSV
-export function writeCsv(
-	header: CsvHeader,
-	rows: CsvRows,
-	file: fs.PathOrFileDescriptor,
-): void {
-	const out = [header.join(",")];
-	for (const row of rows) {
-		out.push(
-			header
-				.map((h) => `"${(row[h] || "").replace(/"/g, '""')}"`)
-				.join(","),
-		);
+export async function getServiceIds(): Promise<Set<string>> {
+	const serviceIds = new Set<string>();
+	const fileContent = await fs.promises.readFile(TRIPS_OUTPUT_FILE, "utf-8");
+	const data = JSON.parse(fileContent) as Trips;
+	for (const row of data) {
+		if (!serviceIds.has(row.serviceId)) {
+			serviceIds.add(row.serviceId);
+		}
 	}
-	fs.writeFileSync(file, out.join("\n"));
+	return serviceIds;
+}
+
+export async function getTripIds(): Promise<Set<string>> {
+	const tripIds = new Set<string>();
+	const fileContent = await fs.readFileSync(TRIPS_OUTPUT_FILE, "utf-8");
+	const data = JSON.parse(fileContent) as Trips;
+	for (const row of data) {
+		tripIds.add(row.tripId);
+	}
+	return tripIds;
+}
+
+export async function filterTrips(): Promise<{ data: Trips }> {
+	return new Promise((resolve, reject) => {
+		const filtered: Trips = [];
+		fs.createReadStream(TRIPS_INPUT_FILE)
+			.pipe(csv())
+			.on("data", (row: CsvRow) => {
+				if (row["route_id"] === TARGET_ROUTE_ID) {
+					const filteredRow: Trip = {
+						routeId: row["route_id"] || "",
+						serviceId: row["service_id"] || "",
+						tripId: row["trip_id"] || "",
+					};
+					filtered.push(filteredRow);
+				}
+			})
+			.on("end", () => resolve({ data: filtered }))
+			.on("error", reject);
+	});
 }
 
 async function main(): Promise<void> {
 	try {
-		const tripIds = await getTripIdsFromCsv(STOP_TIMES_FILE);
-		const { header, filtered } = await filterTrips(tripIds);
-		writeCsv(header, filtered, OUTPUT_FILE);
+		const { data } = await filterTrips();
+		writeJson(data, TRIPS_OUTPUT_FILE);
 		console.log(
-			`Filtered trips written to ${OUTPUT_FILE} (${filtered.length} trips)`,
+			`Filtered trips written to ${TRIPS_OUTPUT_FILE} (${data.length} rows)`,
 		);
 	} catch (err) {
 		console.error("Error:", err);
@@ -74,6 +66,5 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-	// Only run if called directly, not when imported for tests
-	main();
+	main().then(() => process.exit(0));
 }
