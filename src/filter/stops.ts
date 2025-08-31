@@ -1,32 +1,25 @@
 import csv from "csv-parser";
 import fs from "fs";
+import sqlite3 from "sqlite3";
 
+import { importCsvToTable } from "./import";
 import { getStopIds } from "./stop_times";
 import {
 	CsvRow,
-	Stop,
-	Stops,
+	CsvRows,
+	DB_FILE,
+	STOP_TABLE,
 	STOPS_INPUT_FILE,
-	STOPS_OUTPUT_FILE,
 } from "./types";
-import { writeJson } from "./utils";
 
-export async function filterStops(
-	stopIds: Set<string>,
-): Promise<{ data: Stops }> {
+async function filterStops(stopIds: Set<string>): Promise<{ data: CsvRows }> {
 	return new Promise((resolve, reject) => {
-		const filtered: Stops = [];
+		const filtered: CsvRows = [];
 		fs.createReadStream(STOPS_INPUT_FILE)
 			.pipe(csv())
 			.on("data", (row: CsvRow) => {
 				if (row["stop_id"] && stopIds.has(row["stop_id"])) {
-					const filteredRow: Stop = {
-						stopId: row["stop_id"] || "",
-						stopName: row["stop_name"] || "",
-						stopLat: row["stop_lat"] || "",
-						stopLon: row["stop_lon"] || "",
-					};
-					filtered.push(filteredRow);
+					filtered.push(row);
 				}
 			})
 			.on("end", () => resolve({ data: filtered }))
@@ -34,19 +27,20 @@ export async function filterStops(
 	});
 }
 
-async function main(): Promise<void> {
+export async function importStops(): Promise<void> {
+	const db = new sqlite3.Database(DB_FILE);
 	try {
-		const stopIds = await getStopIds();
+		const stopIds = await getStopIds(db);
 		const { data } = await filterStops(stopIds);
-		writeJson(data, STOPS_OUTPUT_FILE);
-		console.log(
-			`Filtered stops written to ${STOPS_OUTPUT_FILE} (${data.length} rows)`,
-		);
+		await importCsvToTable(db, STOP_TABLE, data);
 	} catch (err) {
 		console.error("Error:", err);
+	} finally {
+		await new Promise<void>((resolve, reject) => {
+			db.close((err) => {
+				if (err) reject(err);
+				else resolve();
+			});
+		});
 	}
-}
-
-if (require.main === module) {
-	main().then(() => process.exit(0));
 }

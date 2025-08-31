@@ -25,8 +25,10 @@
     "express": "^5.1.0",
     "gtfs-realtime-bindings": "^1.1.1",
     "luxon": "^3.7.1",
+    "node-fetch": "^3.3.2",
     "puppeteer": "^24.17.0",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "unzipper": "^0.12.3"
   },
   "type": "commonjs",
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@types/luxon": "^3.7.1",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
+    "@types/unzipper": "^0.10.11",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
     "eslint": "^9.34.0",

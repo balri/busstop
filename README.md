@@ -7,6 +7,11 @@ node backend/index.js
 
 Download the feed from https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip
 
+Update the feed:
+```
+npx ts-node src/filter/index.ts
+```
+
 # Uptime Monitor
 
 https://dashboard.uptimerobot.com/monitors/801132204
@@ -37,10 +42,16 @@ npm run lint
 npx depcheck
 ```
 
+# Check for unused exports
+```
+npm install -g ts-prune
+ts-prune
+```
+
 # Puppeteer
 
-Takes a screenshot of the site every hour
+Takes a screenshot of the site every 10min
 
 ```
-0 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
+*/10 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
 ```

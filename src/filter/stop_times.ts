@@ -1,45 +1,47 @@
 import csv from "csv-parser";
 import fs from "fs";
+import sqlite3 from "sqlite3";
 
+import { importCsvToTable } from "./import";
 import { getTripIds } from "./trips";
 import {
 	CsvRow,
+	CsvRows,
+	DB_FILE,
 	STOP_TIMES_INPUT_FILE,
-	STOP_TIMES_OUTPUT_FILE,
+	STOP_TIMES_TABLE,
 	StopTimes,
 } from "./types";
-import { writeJson } from "./utils";
 
-export async function getStopIds(): Promise<Set<string>> {
-	const stopIds = new Set<string>();
-	const fileContent = await fs.promises.readFile(
-		STOP_TIMES_OUTPUT_FILE,
-		"utf-8",
-	);
-	const data = JSON.parse(fileContent) as StopTimes;
-	for (const row of data) {
-		if (!stopIds.has(row.stopId)) {
-			stopIds.add(row.stopId);
-		}
-	}
-	return stopIds;
+export async function getStopIds(db: sqlite3.Database): Promise<Set<string>> {
+	return new Promise((resolve, reject) => {
+		const stopIds = new Set<string>();
+		db.all(
+			`SELECT DISTINCT stop_id FROM ${STOP_TIMES_TABLE.name}`,
+			(err, rows) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+				for (const row of rows as StopTimes) {
+					stopIds.add(row.stop_id);
+				}
+				resolve(stopIds);
+			},
+		);
+	});
 }
 
-export async function filterStopTimes(
+async function filterStopTimes(
 	tripIds: Set<string>,
-): Promise<{ data: StopTimes }> {
+): Promise<{ data: CsvRows }> {
 	return new Promise((resolve, reject) => {
-		const filtered: StopTimes = [];
+		const filtered: CsvRows = [];
 		fs.createReadStream(STOP_TIMES_INPUT_FILE)
 			.pipe(csv())
 			.on("data", (row: CsvRow) => {
 				if (row["trip_id"] && tripIds.has(row["trip_id"])) {
-					const filteredRow = {
-						tripId: row["trip_id"] || "",
-						arrivalTime: row["arrival_time"] || "",
-						stopId: row["stop_id"] || "",
-					};
-					filtered.push(filteredRow);
+					filtered.push(row);
 				}
 			})
 			.on("end", () => resolve({ data: filtered }))
@@ -47,19 +49,20 @@ export async function filterStopTimes(
 	});
 }
 
-async function main(): Promise<void> {
+export async function importStopTimes(): Promise<void> {
+	const db = new sqlite3.Database(DB_FILE);
 	try {
-		const tripIds = await getTripIds();
+		const tripIds = await getTripIds(db);
 		const { data } = await filterStopTimes(tripIds);
-		writeJson(data, STOP_TIMES_OUTPUT_FILE);
-		console.log(
-			`Filtered stop times written to ${STOP_TIMES_OUTPUT_FILE} (${data.length} rows)`,
-		);
+		await importCsvToTable(db, STOP_TIMES_TABLE, data);
 	} catch (err) {
 		console.error("Error:", err);
+	} finally {
+		await new Promise<void>((resolve, reject) => {
+			db.close((err) => {
+				if (err) reject(err);
+				else resolve();
+			});
+		});
 	}
-}
-
-if (require.main === module) {
-	main().then(() => process.exit(0));
 }

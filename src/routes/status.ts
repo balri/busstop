@@ -1,11 +1,12 @@
 import axios from "axios";
 import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
+import { DateTime } from "luxon";
 
-import { db, getScheduledArrivalsForStop, getScheduledTime } from "../db";
 import { validateToken } from "../tokens";
-import { haversine, scheduledTimeToUnix, xorDecrypt } from "../utils";
+import { db, getScheduledArrivalsForStop, getScheduledTime } from "./db";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
+import { haversine, scheduledTimeToUnix, xorDecrypt } from "./utils";
 
 const router = express.Router();
 const GTFS_RT_URL =
@@ -104,23 +105,20 @@ router.post("/status", async (req, res) => {
 					Number(process.env["ACCEPTABLE_DELAY"]) || 60;
 
 				const windowSeconds = 30 * 60; // 30 minutes
-				const startTimeStr = new Date((now - 60) * 1000)
-					.toISOString()
-					.substr(11, 8); // "HH:MM:SS"
-				const endTimeStr = new Date((now + windowSeconds) * 1000)
-					.toISOString()
-					.substr(11, 8);
-
 				const scheduledArrivals = await getScheduledArrivalsForStop(
 					stopId,
-					TARGET_ROUTE_ID,
-					startTimeStr,
-					endTimeStr,
+					windowSeconds,
 				);
 
 				// Find the earliest scheduled arrival
+				const today = DateTime.now()
+					.setZone("Australia/Brisbane")
+					.toFormat("yyyyLLdd");
 				const nextScheduled = scheduledArrivals
-					.map((s) => ({ ...s, arrivalTime: Number(s.arrival_time) }))
+					.map((s) => ({
+						...s,
+						arrivalTime: scheduledTimeToUnix(today, s.arrival_time),
+					}))
 					.filter((s) => !isNaN(s.arrivalTime))
 					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
 
@@ -128,7 +126,7 @@ router.post("/status", async (req, res) => {
 					const realtimeTripIds = new Set(
 						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
 					);
-
+					console.log(nextScheduled, realtimeTripIds);
 					if (!realtimeTripIds.has(nextScheduled.trip_id)) {
 						// The next scheduled trip is missing from the real-time feed
 						const response: StatusResponse = {

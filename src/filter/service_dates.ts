@@ -2,23 +2,25 @@ import csv from "csv-parser";
 import fs from "fs";
 import sqlite3 from "sqlite3";
 
-import { TARGET_ROUTE_ID } from "../routes/status";
 import { importCsvToTable } from "./import";
+import { getServiceIds } from "./trips";
 import {
+	CALENDAR_DATES_INPUT_FILE,
 	CsvRow,
 	CsvRows,
 	DB_FILE,
-	ROUTES_INPUT_FILE,
-	ROUTES_TABLE,
+	SERVICE_DATES_TABLE,
 } from "./types";
 
-async function filterRoutes(): Promise<{ data: CsvRows }> {
+async function filterServiceDates(
+	serviceIds: Set<string>,
+): Promise<{ data: CsvRows }> {
 	return new Promise((resolve, reject) => {
 		const filtered: CsvRows = [];
-		fs.createReadStream(ROUTES_INPUT_FILE)
+		fs.createReadStream(CALENDAR_DATES_INPUT_FILE)
 			.pipe(csv())
 			.on("data", (row: CsvRow) => {
-				if (row["route_id"] === TARGET_ROUTE_ID) {
+				if (row["service_id"] && serviceIds.has(row["service_id"])) {
 					filtered.push(row);
 				}
 			})
@@ -27,11 +29,12 @@ async function filterRoutes(): Promise<{ data: CsvRows }> {
 	});
 }
 
-export async function importRoutes(): Promise<void> {
+export async function importServiceDates(): Promise<void> {
 	const db = new sqlite3.Database(DB_FILE);
 	try {
-		const { data } = await filterRoutes();
-		await importCsvToTable(db, ROUTES_TABLE, data);
+		const serviceIds = await getServiceIds(db);
+		const { data } = await filterServiceDates(serviceIds);
+		await importCsvToTable(db, SERVICE_DATES_TABLE, data);
 	} catch (err) {
 		console.error("Error:", err);
 	} finally {
