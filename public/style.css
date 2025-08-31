@@ -52,12 +52,14 @@ h1 {
 
 .bus {
 	font-size: 2.8rem;
-	left: 48%;
+	height: auto;
+	left: 45%;
 	position: absolute;
-	top: 10%;
-	transform: translateX(0) translateY(-50%) scaleX(-1) !important;
+	top: -0.5rem;
+	transform: translateX(0) translateY(-50%) !important;
 	transform-origin: center;
 	transition: none;
+	width: 4.5rem;
 	z-index: 10;
 }
 
@@ -170,8 +172,6 @@ h1 {
 @media (width <=600px) {
 	h1 {
 		font-size: 1.7rem;
-
-		/* Move title up */
 		margin-bottom: 0.5rem;
 		margin-top: 0.2rem;
 	}
@@ -181,13 +181,11 @@ h1 {
 		margin-bottom: 2.5rem;
 		margin-top: 2.5rem;
 		width: 100vw;
-
-		/* Push road (and bus) further down */
 	}
 
 	.bus {
 		font-size: 3.5rem;
-		left: 43%;
+		left: 35%;
 	}
 
 	.bus-stop {
@@ -196,8 +194,6 @@ h1 {
 
 	.bus-stop.visible {
 		left: calc(55% + 1.2rem);
-
-		/* Match bus left + offset */
 	}
 
 	.status-text {
