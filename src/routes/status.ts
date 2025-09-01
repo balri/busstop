@@ -136,6 +136,9 @@ router.post("/status", async (req, res) => {
 					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
 
 				if (nextScheduled) {
+					console.log(
+						`Next scheduled trip: ${nextScheduled.trip_id} at ${nextScheduled.arrivalTime}`,
+					);
 					const realtimeTripIds = new Set(
 						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
 					);
@@ -146,6 +149,10 @@ router.post("/status", async (req, res) => {
 							Math.abs(a.time - nextScheduled.arrivalTime) <
 								ARRIVAL_CACHE_SECONDS,
 					);
+					if (recent)
+						console.log(
+							`Recent arrival: ${recent.tripId} at ${recent.time}`,
+						);
 					if (
 						!realtimeTripIds.has(nextScheduled.trip_id) &&
 						!recent
@@ -215,6 +222,9 @@ router.post("/status", async (req, res) => {
 				}
 
 				if (nextBus && nextBus.tripId) {
+					console.log(
+						`Next bus: ${nextBus.tripId}, arrival_time: ${nextBus.arrivalTime}, delay: ${nextBus.delay}`,
+					);
 					getScheduledTime(nextBus.tripId, stopId)
 						.then((scheduledStr) => {
 							let scheduledTime = null;
