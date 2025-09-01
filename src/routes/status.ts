@@ -13,6 +13,9 @@ const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
 export const TARGET_ROUTE_ID = "61-4158";
 
+const recentArrivals: Record<string, { tripId: string; time: number }[]> = {};
+const ARRIVAL_CACHE_SECONDS = 600; // 10 minutes
+
 router.post("/status", async (req, res) => {
 	const { loc, token } = req.body;
 	if (!validateToken(token)) {
@@ -120,14 +123,33 @@ router.post("/status", async (req, res) => {
 						arrivalTime: scheduledTimeToUnix(today, s.arrival_time),
 					}))
 					.filter((s) => !isNaN(s.arrivalTime))
+					// Filter out scheduled trips seen recently
+					.filter((s) => {
+						const recent = (recentArrivals[stopId] || []).find(
+							(a) =>
+								a.tripId === s.trip_id &&
+								Math.abs(a.time - s.arrivalTime) <
+									ARRIVAL_CACHE_SECONDS,
+						);
+						return !recent;
+					})
 					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
 
 				if (nextScheduled) {
 					const realtimeTripIds = new Set(
 						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
 					);
-					console.log(nextScheduled, realtimeTripIds);
-					if (!realtimeTripIds.has(nextScheduled.trip_id)) {
+					// Check cache for recent arrivals
+					const recent = (recentArrivals[stopId] || []).find(
+						(a) =>
+							a.tripId === nextScheduled.trip_id &&
+							Math.abs(a.time - nextScheduled.arrivalTime) <
+								ARRIVAL_CACHE_SECONDS,
+					);
+					if (
+						!realtimeTripIds.has(nextScheduled.trip_id) &&
+						!recent
+					) {
 						// The next scheduled trip is missing from the real-time feed
 						const response: StatusResponse = {
 							status: "missing_trip",
@@ -167,6 +189,20 @@ router.post("/status", async (req, res) => {
 							arrivalTime < now - 60
 						)
 							continue;
+
+						// Cache this arrival
+						if (!recentArrivals[stopId])
+							recentArrivals[stopId] = [];
+						recentArrivals[stopId].push({
+							tripId: trip?.tripId ?? "",
+							time: arrivalTime,
+						});
+
+						// Remove old arrivals from cache
+						recentArrivals[stopId] = recentArrivals[stopId].filter(
+							(a) => a.time >= now - ARRIVAL_CACHE_SECONDS,
+						);
+
 						if (!nextBus || arrivalTime < nextBus.arrivalTime) {
 							nextBus = {
 								tripId: trip?.tripId ?? undefined,
