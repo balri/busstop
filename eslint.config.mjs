@@ -61,13 +61,18 @@ export default defineConfig([
   },
   {
     files: ["**/*.test.ts", "**/*.spec.ts"],
-    plugins: { jest },
     languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./tsconfig.test.json",
+        sourceType: "module",
+      },
       globals: {
         ...globals.jest,
         ...globals.node,
       },
     },
+    plugins: { jest },
     rules: {
       ...jest.configs.recommended.rules,
     },

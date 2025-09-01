@@ -1,10 +1,10 @@
-echo "🔍 Running checks before push..."
+echo "🔍 Running checks before commit..."
 
 # Run tests
 echo "✅ Running tests..."
 npm test
 if [ $? -ne 0 ]; then
-  echo "❌ Tests failed. Aborting push."
+  echo "❌ Tests failed. Aborting commit."
   exit 1
 fi
 
@@ -12,8 +12,8 @@ fi
 echo "✅ Running lint..."
 npm run lint
 if [ $? -ne 0 ]; then
-  echo "❌ Lint failed. Aborting push."
+  echo "❌ Lint failed. Aborting commit."
   exit 1
 fi
 
-echo "🎉 All checks passed. Proceeding with push!"
+echo "🎉 All checks passed. Proceeding with commit!"
