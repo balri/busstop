@@ -100,6 +100,7 @@ function stopEverything() {
 	}
 	busIcon.classList.add("hidden");
 	busStop.classList.add("hidden");
+	setBusHeadlights(false);
 }
 
 function xorEncrypt(text, key) {
