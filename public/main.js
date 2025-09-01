@@ -13,10 +13,15 @@ let roadMoving = true;
 let roadAnimId = null;
 const roadSpeed = 1.2; // Adjust for desired speed
 
+let stars = [];
+let twinkleAnimId = null;
+
 let countdownInterval = null;
 
 let lat = -27.491992; // Default latitude
 let lon = 153.040728; // Default longitude
+
+let isNight = null; // null = unknown, true = night, false = day
 
 function startPolling() {
 	if (pollTimer) return; // Prevent multiple intervals
@@ -316,26 +321,30 @@ function updateSkyBySunTimes(lat, lon) {
 	const moon = document.querySelector("#moon-stars .moon");
 	const sky = document.getElementById("sky");
 	const timesText = document.getElementById("timesText");
+	const starCanvas = document.getElementById("star-canvas");
 
 	let bg;
-	if (now >= times.dawn && now < times.dusk) {
-		// Day
-		bg = "linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)";
-		if (sun) sun.style.display = "";
-		if (moonStars) moonStars.style.display = "none";
-		if (timesText) timesText.style.color = "#444";
+	const nightNow = !(now >= times.dawn && now < times.dusk);
 
-		// --- Sun position ---
-		if (sun && sky) {
-			const sunPos = SunCalc.getPosition(now, lat, lon);
-			// Map azimuth (0 to 2PI) to left (0% to 100%)
-			const left = 50 + 40 * Math.sin(sunPos.azimuth); // -40% to +40% from center
-			// Map altitude (-PI/2 to PI/2) to top (100% to 0%)
-			const top = 90 - 140 * (sunPos.altitude / (Math.PI / 2)); // exaggerate vertical movement
-			sun.style.left = `${left}%`;
-			sun.style.top = `${top}%`;
+	if (nightNow !== isNight) {
+		isNight = nightNow;
+		if (isNight) {
+			// Night: show and animate stars
+			if (starCanvas) {
+				starCanvas.style.display = "";
+				startStarAnimation();
+			}
+		} else {
+			// Day: hide and stop stars
+			if (starCanvas) starCanvas.style.display = "none";
+			cancelStarAnimation();
 		}
-	} else {
+	}
+
+	if (isNight) {
+		// Night or twilight
+		setBusHeadlights(true);
+
 		if (sun) sun.style.display = "none";
 		if (moonStars) moonStars.style.display = "";
 		if (
@@ -364,6 +373,25 @@ function updateSkyBySunTimes(lat, lon) {
 			const moonIllum = SunCalc.getMoonIllumination(now);
 			moon.textContent = getMoonPhaseEmoji(moonIllum.phase);
 		}
+	} else {
+		// Day
+		setBusHeadlights(false);
+
+		bg = "linear-gradient(to bottom, #87ceeb 0%, #f0f8ff 100%)";
+		if (sun) sun.style.display = "";
+		if (moonStars) moonStars.style.display = "none";
+		if (timesText) timesText.style.color = "#444";
+
+		// --- Sun position ---
+		if (sun && sky) {
+			const sunPos = SunCalc.getPosition(now, lat, lon);
+			// Map azimuth (0 to 2PI) to left (0% to 100%)
+			const left = 50 + 40 * Math.sin(sunPos.azimuth); // -40% to +40% from center
+			// Map altitude (-PI/2 to PI/2) to top (100% to 0%)
+			const top = 90 - 140 * (sunPos.altitude / (Math.PI / 2)); // exaggerate vertical movement
+			sun.style.left = `${left}%`;
+			sun.style.top = `${top}%`;
+		}
 	}
 	document.body.style.background = bg;
 }
@@ -377,6 +405,12 @@ function getMoonPhaseEmoji(phase) {
 	if (phase < 0.72) return "🌖"; // Waning gibbous
 	if (phase < 0.78) return "🌗"; // Last quarter
 	return "🌘"; // Waning crescent
+}
+
+function setBusHeadlights(on) {
+	document.getElementById("headlight-beam").style.display = on
+		? "block"
+		: "none";
 }
 
 updateSkyBySunTimes(lat, lon);
@@ -396,3 +430,76 @@ busStop.classList.add("no-transition");
 setTimeout(() => {
 	busStop.classList.remove("no-transition");
 }, 100);
+
+function createStars() {
+	const canvas = document.getElementById("star-canvas");
+	if (!canvas) return;
+	const dpr = window.devicePixelRatio || 1;
+	const width = window.innerWidth;
+	const height = parseFloat(getComputedStyle(canvas).height);
+
+	const starDensity = 0.6; // stars per px
+	const starCount = Math.round(width * starDensity);
+
+	stars = [];
+	for (let i = 0; i < starCount; i++) {
+		stars.push({
+			x: Math.random() * width * dpr,
+			y: Math.random() * height * dpr,
+			r: (Math.random() * 0.7 + 0.3) * dpr,
+			baseAlpha: Math.random() * 0.5 + 0.5,
+			twinkleSpeed: Math.random() * 1.5 + 0.5, // radians/sec
+			twinklePhase: Math.random() * Math.PI * 2,
+		});
+	}
+}
+
+function animateStars() {
+	const canvas = document.getElementById("star-canvas");
+	if (!canvas) return;
+	const dpr = window.devicePixelRatio || 1;
+	const width = window.innerWidth;
+	const height = parseFloat(getComputedStyle(canvas).height);
+
+	canvas.width = width * dpr;
+	canvas.height = height * dpr;
+	canvas.style.width = width + "px";
+	canvas.style.height = height + "px";
+
+	const ctx = canvas.getContext("2d");
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	const now = performance.now() / 1000; // seconds
+
+	for (const star of stars) {
+		const twinkle =
+			0.4 * Math.sin(now * star.twinkleSpeed + star.twinklePhase);
+		const alpha = Math.max(0, Math.min(1, star.baseAlpha + twinkle));
+		ctx.globalAlpha = alpha;
+		ctx.beginPath();
+		ctx.arc(star.x, star.y, star.r, 0, 2 * Math.PI);
+		ctx.fillStyle = "#fffbe6";
+		ctx.shadowColor = "#fffbe6";
+		ctx.shadowBlur = 4 * dpr;
+		ctx.fill();
+	}
+	ctx.globalAlpha = 1;
+
+	twinkleAnimId = requestAnimationFrame(animateStars);
+}
+
+function startStarAnimation() {
+	cancelStarAnimation();
+	createStars();
+	animateStars();
+}
+
+function cancelStarAnimation() {
+	if (twinkleAnimId) {
+		cancelAnimationFrame(twinkleAnimId);
+		twinkleAnimId = null;
+	}
+}
+
+// Redraw stars on resize
+window.addEventListener("resize", startStarAnimation);

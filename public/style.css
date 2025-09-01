@@ -169,6 +169,31 @@ h1 {
 	text-shadow: 0 0 12px #fffbe6, 0 0 6px #fffbe6;
 }
 
+.headlight-beam {
+	background: radial-gradient(ellipse at 0% 40%, #fffbe6cc 0%, #fffbe600 70%);
+	display: none;
+	filter: blur(1px);
+	height: 0.8rem;
+	left: 50%;
+	opacity: 0.8;
+	pointer-events: none;
+	position: absolute;
+	top: 0.8rem;
+	transform: rotate(8deg);
+	width: 7rem;
+	z-index: 9;
+}
+
+#star-canvas {
+	height: 25rem;
+	left: 0;
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	width: 100vw;
+	z-index: 1;
+}
+
 @media (width <=600px) {
 	h1 {
 		font-size: 1.7rem;
@@ -217,5 +242,16 @@ h1 {
 		overflow-wrap: break-word;
 		white-space: normal;
 		word-break: keep-all;
+	}
+
+	.headlight-beam {
+		height: 0.8rem;
+		left: 54%;
+		top: 0.8rem;
+		width: 5.5rem;
+	}
+
+	#star-canvas {
+		height: 18rem;
 	}
 }
