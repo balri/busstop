@@ -61,12 +61,13 @@ router.post("/status", async (req, res) => {
 				}
 			}
 
-			if (!nearest || minDist > minDistance) {
+			if (!nearest) {
 				return res.status(404).json({
-					error: `No bus stop within ${minDistance}m`,
-					nearest: nearest ? nearest : null,
+					error: `No bus stop found`,
 				});
 			}
+
+			const userIsNearEnough = minDist <= minDistance;
 
 			const stopId = nearest.stopId;
 			try {
@@ -136,9 +137,6 @@ router.post("/status", async (req, res) => {
 					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
 
 				if (nextScheduled) {
-					console.log(
-						`Next scheduled trip: ${nextScheduled.trip_id} at ${nextScheduled.arrivalTime}`,
-					);
 					const realtimeTripIds = new Set(
 						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
 					);
@@ -149,10 +147,6 @@ router.post("/status", async (req, res) => {
 							Math.abs(a.time - nextScheduled.arrivalTime) <
 								ARRIVAL_CACHE_SECONDS,
 					);
-					if (recent)
-						console.log(
-							`Recent arrival: ${recent.tripId} at ${recent.time}`,
-						);
 					if (
 						!realtimeTripIds.has(nextScheduled.trip_id) &&
 						!recent
@@ -161,13 +155,15 @@ router.post("/status", async (req, res) => {
 						const response: StatusResponse = {
 							status: "missing_trip",
 							scheduledTime: nextScheduled.arrivalTime,
-							stopName: nearest.stopName,
 							estimatedTime: nextScheduled.arrivalTime,
 							delay: null,
+							nearest: nearest,
 						};
 
 						// Only return keyword if within 1 minute of arrival time
+						// and the user is near enough
 						if (
+							userIsNearEnough &&
 							nextScheduled.arrivalTime &&
 							Math.abs(now - nextScheduled.arrivalTime) <= 60
 						) {
@@ -222,9 +218,6 @@ router.post("/status", async (req, res) => {
 				}
 
 				if (nextBus && nextBus.tripId) {
-					console.log(
-						`Next bus: ${nextBus.tripId}, arrival_time: ${nextBus.arrivalTime}, delay: ${nextBus.delay}`,
-					);
 					getScheduledTime(nextBus.tripId, stopId)
 						.then((scheduledStr) => {
 							let scheduledTime = null;
@@ -257,11 +250,13 @@ router.post("/status", async (req, res) => {
 								scheduledTime,
 								estimatedTime: nextBus.arrivalTime,
 								delay: nextBus.delay,
-								stopName: nearest.stopName,
+								nearest: nearest,
 							};
 
 							// Only return keyword if within 1 minute of arrival time
+							// and the user is near enough
 							if (
+								userIsNearEnough &&
 								nextBus.arrivalTime &&
 								Math.abs(now - nextBus.arrivalTime) <= 60
 							) {

@@ -1,9 +1,15 @@
-const statusText = document.getElementById("statusText");
-const busIcon = document.getElementById("busIcon");
-const road = document.querySelector(".road");
+const busIcon = document.getElementById("bus-icon");
 const busStop = document.getElementById("bus-stop");
-const timesText = document.getElementById("timesText");
-const busStopName = document.getElementById("busStopName");
+const busStopDistance = document.getElementById("bus-stop-distance");
+const busStopName = document.getElementById("bus-stop-name");
+const moon = document.querySelector("#moon-stars .moon");
+const moonStars = document.getElementById("moon-stars");
+const road = document.querySelector(".road");
+const sky = document.getElementById("sky");
+const starCanvas = document.getElementById("star-canvas");
+const statusText = document.getElementById("status-text");
+const sun = document.getElementById("sun");
+const timesText = document.getElementById("times-text");
 
 let currentStatus = null;
 let pollTimer = null;
@@ -12,6 +18,8 @@ let roadBgPos = 0;
 let roadMoving = true;
 let roadAnimId = null;
 const roadSpeed = 1.2; // Adjust for desired speed
+
+const maxDistance = 100; // meters to show keyword and stop the bus
 
 let stars = [];
 let twinkleAnimId = null;
@@ -82,9 +90,10 @@ function stopRoad(data) {
 		cancelAnimationFrame(roadAnimId);
 		if (data?.keyword) {
 			updateMessages(
-				data.stopName || "Bus Status",
+				data.nearest.stopName || "Bus Status",
 				currentStatus,
 				"The bus has arrived!<br>Your keyword is: " + data.keyword,
+				data.nearest,
 			);
 		}
 		roadAnimId = null;
@@ -113,10 +122,21 @@ function xorEncrypt(text, key) {
 	return btoa(result); // base64 encode for safe transport
 }
 
-function updateMessages(busStop, status, message) {
+function updateMessages(busStop, status, message, nearest = null) {
 	busStopName.textContent = busStop;
 	statusText.textContent = status.toUpperCase();
 	timesText.innerHTML = message;
+	if (busStopDistance && nearest !== null) {
+		const { distance, stopLat, stopLon } = nearest;
+		let distanceText = `Distance: <b>${displayDistance(distance)}</b>`;
+		if (distance && distance > maxDistance) {
+			distanceText += `<br>
+			<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
+				View in Google Maps
+			</a>`;
+		}
+		busStopDistance.innerHTML = distanceText;
+	}
 }
 
 function displayDistance(distance) {
@@ -147,28 +167,12 @@ async function fetchStatus() {
 			})
 				.then((res) => {
 					if (res.status === 404) {
-						res.json().then((data) => {
-							if (data.nearest) {
-								const { stopName, stopLat, stopLon, distance } =
-									data.nearest;
-								updateMessages(
-									"No Nearby Bus Stop",
-									"NO BUS STOP",
-									`
-										Closest stop: <b>${stopName}</b><br>
-										Distance: <b>${displayDistance(distance)}</b><br>
-										<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
-											View in Google Maps
-										</a>
-									`,
-								);
-							} else {
-								updateMessages(
-									"No Nearby Bus Stop",
-									"NO BUS STOP",
-									"Please go to a bus stop and try again.",
-								);
-							}
+						res.json().then(() => {
+							updateMessages(
+								"No Nearby Bus Stop",
+								"NO BUS STOP",
+								"Please go to a bus stop and try again.",
+							);
 							stopEverything();
 						});
 						return null;
@@ -193,12 +197,13 @@ async function fetchStatus() {
 						data.status === "no_service"
 					) {
 						updateMessages(
-							data.stopName || "Bus Status",
+							data.nearest.stopName || "Bus Status",
 							"NO SERVICE",
 							`
-							The service is not currently running.<br>
-							Please check back later.
-						`,
+								The service is not currently running.<br>
+								Please check back later.
+							`,
+							data.nearest,
 						);
 
 						stopEverything();
@@ -280,7 +285,7 @@ function startCountdown(data) {
 		}
 
 		updateMessages(
-			data.stopName || "Bus Status",
+			data.nearest.stopName || "Bus Status",
 			currentStatus,
 			`
 				The bus scheduled to arrive at<br>
@@ -288,6 +293,7 @@ function startCountdown(data) {
 				is ${delayMsg} and will arrive in:<br>
 				<b>${mins}m ${secs.toString().padStart(2, "0")}s</b>
 			`,
+			data.nearest,
 		);
 
 		if (diff === 0) {
@@ -295,16 +301,31 @@ function startCountdown(data) {
 
 			if (data.keyword) {
 				showBusStopAndStopRoad(data);
-			} else {
+			} else if (
+				data.nearest.distance !== null &&
+				data.nearest.distance <= maxDistance
+			) {
 				// No keyword, likely due to polling being paused
 				updateMessages(
-					data.stopName || "Bus Status",
+					data.nearest.stopName || "Bus Status",
 					"REFRESH REQUIRED",
 					`
                         The countdown has finished, but the page was inactive.<br>
                         Please refresh the page to continue.
                     `,
+					data.nearest,
 				);
+			} else {
+				updateMessages(
+					data.nearest.stopName || "Bus Status",
+					"NOT CLOSE ENOUGH",
+					`
+                        The bus has arrived!<br>
+                        You need to get closer to the bus stop.
+                    `,
+					data.nearest,
+				);
+				showBusStopAndStopRoad(data);
 			}
 		}
 	}
@@ -316,13 +337,6 @@ function startCountdown(data) {
 function updateSkyBySunTimes(lat, lon) {
 	const now = new Date();
 	const times = SunCalc.getTimes(now, lat, lon);
-
-	const sun = document.getElementById("sun");
-	const moonStars = document.getElementById("moon-stars");
-	const moon = document.querySelector("#moon-stars .moon");
-	const sky = document.getElementById("sky");
-	const timesText = document.getElementById("timesText");
-	const starCanvas = document.getElementById("star-canvas");
 
 	let bg;
 	const nightNow = !(now >= times.dawn && now < times.dusk);

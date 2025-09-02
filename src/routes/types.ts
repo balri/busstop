@@ -27,6 +27,6 @@ export interface StatusResponse {
 	scheduledTime: number | null;
 	estimatedTime: number;
 	delay: number | null;
-	stopName: string;
 	keyword?: string | null;
+	nearest: NearestStop | null;
 }

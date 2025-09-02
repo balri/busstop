@@ -194,6 +194,12 @@ h1 {
 	z-index: 1;
 }
 
+#bus-stop-distance {
+	margin-bottom: 1rem;
+	margin-top: 0.25rem;
+	text-align: center;
+}
+
 @media (width <=600px) {
 	h1 {
 		font-size: 1.7rem;
