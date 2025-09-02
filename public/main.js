@@ -305,16 +305,7 @@ function startCountdown(data) {
 				data.nearest.distance !== null &&
 				data.nearest.distance <= maxDistance
 			) {
-				// No keyword, likely due to polling being paused
-				updateMessages(
-					data.nearest.stopName || "Bus Status",
-					"REFRESH REQUIRED",
-					`
-                        The countdown has finished, but the page was inactive.<br>
-                        Please refresh the page to continue.
-                    `,
-					data.nearest,
-				);
+				window.location.reload();
 			} else {
 				updateMessages(
 					data.nearest.stopName || "Bus Status",
@@ -326,6 +317,7 @@ function startCountdown(data) {
 					data.nearest,
 				);
 				showBusStopAndStopRoad(data);
+				stopPolling();
 			}
 		}
 	}
@@ -369,10 +361,12 @@ function updateSkyBySunTimes(lat, lon) {
 			// Twilight
 			bg = "linear-gradient(to bottom, #415a77 0%, #778da9 100%)";
 			if (timesText) timesText.style.color = "#cfe2ff";
+			if (busStopDistance) busStopDistance.style.color = "#cfe2ff";
 		} else {
 			// Night
 			bg = "linear-gradient(to bottom, #232526 0%, #414345 100%)";
 			if (timesText) timesText.style.color = "#fffbe6";
+			if (busStopDistance) busStopDistance.style.color = "#fffbe6";
 		}
 
 		// --- Moon position ---
@@ -396,6 +390,7 @@ function updateSkyBySunTimes(lat, lon) {
 		if (sun) sun.style.display = "";
 		if (moonStars) moonStars.style.display = "none";
 		if (timesText) timesText.style.color = "#444";
+		if (busStopDistance) busStopDistance.style.color = "#444";
 
 		// --- Sun position ---
 		if (sun && sky) {
