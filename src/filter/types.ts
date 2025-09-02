@@ -99,3 +99,5 @@ export const SERVICE_DATES_TABLE: DbTable = {
 	name: "service_dates",
 	columns: ["service_id TEXT", "date TEXT", "exception_type INTEGER"],
 };
+
+export const EXCEPTION_TYPE_OMITTED = "2";

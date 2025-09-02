@@ -3,7 +3,6 @@ import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 import { DateTime } from "luxon";
 
-import { validateToken } from "../tokens";
 import { db, getScheduledArrivalsForStop, getScheduledTime } from "./db";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
 import { haversine, scheduledTimeToUnix, xorDecrypt } from "./utils";
@@ -18,10 +17,6 @@ const ARRIVAL_CACHE_SECONDS = 600; // 10 minutes
 
 router.post("/status", async (req, res) => {
 	const { loc, token } = req.body;
-	if (!validateToken(token)) {
-		return res.status(403).json({ error: "Invalid or expired token" });
-	}
-
 	let userLat, userLon;
 	try {
 		const decrypted = xorDecrypt(loc, token);
@@ -86,7 +81,7 @@ router.post("/status", async (req, res) => {
 						(entity) =>
 							entity.tripUpdate &&
 							entity.tripUpdate.trip.routeId ===
-								TARGET_ROUTE_ID &&
+							TARGET_ROUTE_ID &&
 							entity.tripUpdate.stopTimeUpdate?.some(
 								(stopTimeUpdate) =>
 									stopTimeUpdate.stopId === stopId,
@@ -130,7 +125,7 @@ router.post("/status", async (req, res) => {
 							(a) =>
 								a.tripId === s.trip_id &&
 								Math.abs(a.time - s.arrivalTime) <
-									ARRIVAL_CACHE_SECONDS,
+								ARRIVAL_CACHE_SECONDS,
 						);
 						return !recent;
 					})
@@ -145,7 +140,7 @@ router.post("/status", async (req, res) => {
 						(a) =>
 							a.tripId === nextScheduled.trip_id &&
 							Math.abs(a.time - nextScheduled.arrivalTime) <
-								ARRIVAL_CACHE_SECONDS,
+							ARRIVAL_CACHE_SECONDS,
 					);
 					if (
 						!realtimeTripIds.has(nextScheduled.trip_id) &&
