@@ -9,7 +9,6 @@ import {
 	CsvRow,
 	CsvRows,
 	DB_FILE,
-	EXCEPTION_TYPE_OMITTED,
 	SERVICE_DATES_TABLE,
 } from "./types";
 
@@ -21,11 +20,7 @@ async function filterServiceDates(
 		fs.createReadStream(CALENDAR_DATES_INPUT_FILE)
 			.pipe(csv())
 			.on("data", (row: CsvRow) => {
-				if (
-					row["service_id"] &&
-					serviceIds.has(row["service_id"]) &&
-					row["exception_type"] === EXCEPTION_TYPE_OMITTED
-				) {
+				if (row["service_id"] && serviceIds.has(row["service_id"])) {
 					filtered.push(row);
 				}
 			})
