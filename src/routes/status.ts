@@ -2,7 +2,6 @@ import axios from "axios";
 import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 
-import { validateToken } from "../tokens";
 import { db } from "./db";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
 import { haversine, xorDecrypt } from "./utils";
@@ -10,17 +9,15 @@ import { haversine, xorDecrypt } from "./utils";
 const router = express.Router();
 const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
+export const BUS_TOKEN = process.env["BUS_TOKEN"] || "bigjetplane";
 export const TARGET_ROUTE_ID = "61-4158";
 
 router.post("/status", async (req, res) => {
-	const { loc, token } = req.body;
-	if (!validateToken(token)) {
-		return res.status(403).json({ error: "Invalid or expired token" });
-	}
+	const { loc } = req.body;
 
 	let userLat, userLon;
 	try {
-		const decrypted = xorDecrypt(loc, token);
+		const decrypted = xorDecrypt(loc, BUS_TOKEN);
 		const parsed = JSON.parse(decrypted);
 		userLat = parseFloat(parsed.lat);
 		userLon = parseFloat(parsed.lon);

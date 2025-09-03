@@ -162,7 +162,6 @@ async function fetchStatus() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					loc: encryptedLoc,
-					token: window.BUS_TOKEN,
 				}),
 			})
 				.then((res) => {
@@ -175,15 +174,6 @@ async function fetchStatus() {
 							);
 							stopEverything();
 						});
-						return null;
-					}
-					if (res.status === 403) {
-						updateMessages(
-							"Session Expired",
-							"SESSION EXPIRED",
-							"Please refresh the page to continue.",
-						);
-						stopEverything();
 						return null;
 					}
 					return res.json();

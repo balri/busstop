@@ -2,8 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 
-import statusRouter from "./routes/status";
-import { generateToken } from "./tokens";
+import statusRouter, { BUS_TOKEN } from "./routes/status";
 
 const app = express();
 
@@ -11,7 +10,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.get("/", (_req, res) => {
-	const token = generateToken();
+	const token = BUS_TOKEN;
 	fs.readFile(
 		path.join(__dirname, "../public/index.template.html"),
 		"utf8",
