@@ -217,12 +217,11 @@ async function fetchStatus() {
 					startCountdown(data);
 				})
 				.catch((e) => {
-					console.error(e);
 					updateMessages(
 						"Bus Status",
 						"ERROR",
 						`
-						Error loading status.<br>
+						Error loading status: ${e}<br>
 						Please try again later.
 						`,
 					);
@@ -277,9 +276,6 @@ function startCountdown(data) {
 			delayMsg = `${delayMins} min ${currentStatus}`;
 		} else if (data.status == "early") {
 			delayMsg = `${Math.abs(delayMins)} min ${currentStatus}`;
-		} else if (data.status === "missing_trip") {
-			delayMsg = "unknown";
-			currentStatus = "NO REAL-TIME INFO";
 		} else {
 			delayMsg = currentStatus;
 		}

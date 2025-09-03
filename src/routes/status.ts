@@ -1,20 +1,16 @@
 import axios from "axios";
 import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import { DateTime } from "luxon";
 
 import { validateToken } from "../tokens";
-import { db, getScheduledArrivalsForStop, getScheduledTime } from "./db";
+import { db } from "./db";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
-import { haversine, scheduledTimeToUnix, xorDecrypt } from "./utils";
+import { haversine, xorDecrypt } from "./utils";
 
 const router = express.Router();
 const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
 export const TARGET_ROUTE_ID = "61-4158";
-
-const recentArrivals: Record<string, { tripId: string; time: number }[]> = {};
-const ARRIVAL_CACHE_SECONDS = 600; // 10 minutes
 
 router.post("/status", async (req, res) => {
 	const { loc, token } = req.body;
@@ -108,73 +104,6 @@ router.post("/status", async (req, res) => {
 				const acceptableDelay =
 					Number(process.env["ACCEPTABLE_DELAY"]) || 60;
 
-				const windowSeconds = 30 * 60; // 30 minutes
-				const scheduledArrivals = await getScheduledArrivalsForStop(
-					stopId,
-					windowSeconds,
-				);
-
-				// Find the earliest scheduled arrival
-				const today = DateTime.now()
-					.setZone("Australia/Brisbane")
-					.toFormat("yyyyLLdd");
-				const nextScheduled = scheduledArrivals
-					.map((s) => ({
-						...s,
-						arrivalTime: scheduledTimeToUnix(today, s.arrival_time),
-					}))
-					.filter((s) => !isNaN(s.arrivalTime))
-					// Filter out scheduled trips seen recently
-					.filter((s) => {
-						const recent = (recentArrivals[stopId] || []).find(
-							(a) =>
-								a.tripId === s.trip_id &&
-								Math.abs(a.time - s.arrivalTime) <
-									ARRIVAL_CACHE_SECONDS,
-						);
-						return !recent;
-					})
-					.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
-
-				if (nextScheduled) {
-					const realtimeTripIds = new Set(
-						filteredEntities.map((e) => e.tripUpdate.trip?.tripId),
-					);
-					// Check cache for recent arrivals
-					const recent = (recentArrivals[stopId] || []).find(
-						(a) =>
-							a.tripId === nextScheduled.trip_id &&
-							Math.abs(a.time - nextScheduled.arrivalTime) <
-								ARRIVAL_CACHE_SECONDS,
-					);
-					if (
-						!realtimeTripIds.has(nextScheduled.trip_id) &&
-						!recent
-					) {
-						// The next scheduled trip is missing from the real-time feed
-						const response: StatusResponse = {
-							status: "missing_trip",
-							scheduledTime: nextScheduled.arrivalTime,
-							estimatedTime: nextScheduled.arrivalTime,
-							delay: null,
-							nearest: nearest,
-						};
-
-						// Only return keyword if within 1 minute of arrival time
-						// and the user is near enough
-						if (
-							userIsNearEnough &&
-							nextScheduled.arrivalTime &&
-							Math.abs(now - nextScheduled.arrivalTime) <= 60
-						) {
-							response.keyword = secretKeyword;
-						}
-
-						res.json(response);
-						return;
-					}
-				}
-
 				for (const entity of filteredEntities) {
 					const trip = entity.tripUpdate.trip;
 					for (const stopTimeUpdate of entity.tripUpdate
@@ -193,19 +122,6 @@ router.post("/status", async (req, res) => {
 						)
 							continue;
 
-						// Cache this arrival
-						if (!recentArrivals[stopId])
-							recentArrivals[stopId] = [];
-						recentArrivals[stopId].push({
-							tripId: trip?.tripId ?? "",
-							time: arrivalTime,
-						});
-
-						// Remove old arrivals from cache
-						recentArrivals[stopId] = recentArrivals[stopId].filter(
-							(a) => a.time >= now - ARRIVAL_CACHE_SECONDS,
-						);
-
 						if (!nextBus || arrivalTime < nextBus.arrivalTime) {
 							nextBus = {
 								tripId: trip?.tripId ?? undefined,
@@ -218,59 +134,45 @@ router.post("/status", async (req, res) => {
 				}
 
 				if (nextBus && nextBus.tripId) {
-					getScheduledTime(nextBus.tripId, stopId)
-						.then((scheduledStr) => {
-							let scheduledTime = null;
-							if (
-								scheduledStr &&
-								typeof nextBus.startDate === "string"
-							) {
-								scheduledTime = scheduledTimeToUnix(
-									nextBus.startDate,
-									scheduledStr,
-								);
-							}
-							let status = "on_time";
-							const now = Math.floor(Date.now() / 1000);
+					const scheduledTime =
+						nextBus.arrivalTime - (nextBus.delay ?? 0);
+					let status = "on_time";
+					const now = Math.floor(Date.now() / 1000);
 
-							if (
-								typeof nextBus.delay === "number" &&
-								nextBus.delay > acceptableDelay
-							) {
-								status = "late";
-							} else if (
-								typeof nextBus.delay === "number" &&
-								nextBus.delay < -acceptableDelay
-							) {
-								status = "early";
-							}
+					if (
+						typeof nextBus.delay === "number" &&
+						nextBus.delay > acceptableDelay
+					) {
+						status = "late";
+					} else if (
+						typeof nextBus.delay === "number" &&
+						nextBus.delay < -acceptableDelay
+					) {
+						status = "early";
+					}
 
-							const response: StatusResponse = {
-								status,
-								scheduledTime,
-								estimatedTime: nextBus.arrivalTime,
-								delay: nextBus.delay,
-								nearest: nearest,
-							};
+					const response: StatusResponse = {
+						status,
+						scheduledTime,
+						estimatedTime: nextBus.arrivalTime,
+						delay: nextBus.delay,
+						nearest: nearest,
+					};
 
-							// Only return keyword if within 1 minute of arrival time
-							// and the user is near enough
-							if (
-								userIsNearEnough &&
-								nextBus.arrivalTime &&
-								Math.abs(now - nextBus.arrivalTime) <= 60
-							) {
-								response.keyword = secretKeyword;
-							}
+					// Only return keyword if within 1 minute of arrival time
+					// and the user is near enough
+					if (
+						userIsNearEnough &&
+						nextBus.arrivalTime &&
+						Math.abs(now - nextBus.arrivalTime) <= 60
+					) {
+						response.keyword = secretKeyword;
+					}
 
-							res.json(response);
-							return;
-						})
-						.catch(() => {
-							res.status(500).json({ error: "DB error" });
-							return;
-						});
+					res.json(response);
+					return;
 				} else {
+					console.log("No service found for stop", stopId);
 					res.json({ status: "no_service" });
 					return;
 				}
@@ -279,7 +181,6 @@ router.post("/status", async (req, res) => {
 				res.status(500).json({ error: "Failed to fetch GTFS-RT feed" });
 				return;
 			}
-			return;
 		},
 	);
 	return;

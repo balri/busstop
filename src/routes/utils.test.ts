@@ -1,4 +1,4 @@
-import { haversine, scheduledTimeToUnix, xorDecrypt } from "./utils";
+import { haversine, xorDecrypt } from "./utils";
 
 function xorEncrypt(text: string, key: string): string {
 	let result = "";
@@ -45,20 +45,5 @@ describe("xorDecrypt", () => {
 		const wrongKey = "wrong";
 		const encrypted = xorEncrypt(original, key);
 		expect(xorDecrypt(encrypted, wrongKey)).not.toBe(original);
-	});
-});
-
-describe("scheduledTimeToUnix", () => {
-	it("returns correct unix time for known input", () => {
-		// 2025-08-27 12:34:56 in Australia/Brisbane
-		const unix = scheduledTimeToUnix("20250827", "12:34:56");
-		const dt = new Date("2025-08-27T12:34:56+10:00");
-		expect(unix).toBeCloseTo(Math.floor(dt.getTime() / 1000));
-	});
-
-	it("handles midnight correctly", () => {
-		const unix = scheduledTimeToUnix("20250101", "00:00:00");
-		const dt = new Date("2025-01-01T00:00:00+10:00");
-		expect(unix).toBeCloseTo(Math.floor(dt.getTime() / 1000));
 	});
 });

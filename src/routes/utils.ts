@@ -1,5 +1,3 @@
-import { DateTime } from "luxon";
-
 export function haversine(
 	lat1: number,
 	lon1: number,
@@ -29,19 +27,4 @@ export function xorDecrypt(encoded: string, key: string): string {
 		);
 	}
 	return result;
-}
-
-export function scheduledTimeToUnix(
-	startDate: string,
-	scheduledTime: string,
-): number {
-	const year = +startDate.substring(0, 4);
-	const month = +startDate.substring(4, 6);
-	const day = +startDate.substring(6, 8);
-	const [hours, minutes, seconds] = scheduledTime.split(":").map(Number);
-	const dt = DateTime.fromObject(
-		{ year, month, day, hour: hours, minute: minutes, second: seconds },
-		{ zone: "Australia/Brisbane" },
-	);
-	return Math.floor(dt.toSeconds());
 }
