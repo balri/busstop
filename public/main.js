@@ -191,7 +191,9 @@ async function fetchStatus() {
 							"NO SERVICE",
 							`
 								The service is not currently running.<br>
-								Please check back later.
+								<a href="https://jp.translink.com.au/plan-your-journey/timetables/bus/t/61" target="_blank">
+									View timetables on TransLink
+								</a>
 							`,
 							data.nearest,
 						);

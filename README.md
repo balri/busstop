@@ -55,3 +55,13 @@ Takes a screenshot of the site every 10min
 ```
 */10 * * * * /usr/local/bin/node /Users/balri/Documents/busstop/scripts/screenshot.js
 ```
+
+# Minify
+
+```
+npx terser public/main.js -o public/main.min.js
+```
+
+```
+npx cleancss -o public/style.min.css public/style.css
+```

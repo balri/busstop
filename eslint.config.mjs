@@ -10,7 +10,12 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 
 export default defineConfig([
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "public/**/*.min.js",
+      "public/**/*.min.css",
+    ],
   },
   {
     files: ["public/**/*.js"],

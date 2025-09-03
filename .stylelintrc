@@ -5,5 +5,8 @@
   ],
   "rules": {
     "order/properties-alphabetical-order": true
-  }
+  },
+  "ignoreFiles": [
+    "public/**/*.min.css"
+  ]
 }
