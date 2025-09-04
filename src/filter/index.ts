@@ -5,6 +5,7 @@ import unzipper from "unzipper";
 import { importRoutes } from "./routes";
 import { importServiceDates } from "./service_dates";
 import { importServices } from "./services";
+import { importStopDirections } from "./stop_directions";
 import { importStopTimes } from "./stop_times";
 import { importStops } from "./stops";
 import { importTrips } from "./trips";
@@ -46,6 +47,7 @@ async function main() {
 		await importTrips();
 		await importStopTimes();
 		await importStops();
+		await importStopDirections();
 		await importServices();
 		await importServiceDates();
 		console.log("\n✅ All import functions completed successfully.");

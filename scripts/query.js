@@ -5,25 +5,10 @@ const dbPath = path.join(path.resolve(process.cwd()), "gtfs.db");
 
 // const sql = "SELECT name FROM sqlite_master WHERE type='table'";
 const sql = `
-	SELECT *
-	FROM trips
-	JOIN stop_times ON trips.trip_id = stop_times.trip_id
-	JOIN stops ON stop_times.stop_id = stops.stop_id
-	JOIN services ON trips.service_id = services.service_id
-	WHERE stops.stop_name = 'Logan Rd at Lewis Street, stop 11'
-	AND services.sunday = 1
-	AND services.start_date <= '20250831'
-	AND services.end_date >= '20250831'
-	AND stop_times.arrival_time > '11:18:00'
-	AND stop_times.arrival_time < '11:48:00'
-	AND '20250831' NOT IN (
-		SELECT date
-		FROM service_dates
-		WHERE service_id = services.service_id
-		AND exception_type = 2
-	)
-		ORDER BY stop_times.arrival_time
-		LIMIT 1
+	SELECT stops.stop_id, stop_name, stop_lat, stop_lon
+		FROM stops
+		JOIN stop_directions ON stops.stop_id = stop_directions.stop_id
+		WHERE direction_id = ?
 `;
 
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -33,7 +18,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 	}
 });
 
-db.all(sql, (err, rows) => {
+db.all(sql, [1], (err, rows) => {
 	if (err) {
 		console.error("Query error:", err);
 	} else {

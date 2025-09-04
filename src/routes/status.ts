@@ -1,6 +1,7 @@
 import axios from "axios";
 import express from "express";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
+import { DateTime } from "luxon";
 
 import { db } from "./db";
 import { NearestStop, NextBus, StatusResponse, Stops } from "./types";
@@ -27,11 +28,19 @@ router.post("/status", async (req, res) => {
 	}
 
 	const minDistance = Number(process.env["MIN_DISTANCE"]) || 100;
+	const now = DateTime.utc().setZone("Australia/Brisbane");
+	const direction = now.hour < 12 ? 0 : 0; // 0 = outbound, 1 = inbound
 
 	db.all(
-		"SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops",
+		`
+		SELECT stops.stop_id, stop_name, stop_lat, stop_lon
+		FROM stops
+		JOIN stop_directions ON stops.stop_id = stop_directions.stop_id
+		WHERE direction_id = ?
+		`,
+		[direction],
 		async (err: Error | null, stops: Stops) => {
-			if (err) return res.status(500).json({ error: "DB error" });
+			if (err) return res.status(500).json({ error: err });
 
 			let nearest: NearestStop | null = null;
 			let minDist = Infinity;

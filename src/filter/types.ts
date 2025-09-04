@@ -9,15 +9,16 @@ export type CsvRow = Record<string, string>;
 
 export type CsvRows = CsvRow[];
 
-export interface Trip {
+interface Trip {
 	route_id: string;
 	service_id: string;
 	trip_id: string;
+	direction_id: number;
 }
 
 export type Trips = Trip[];
 
-export interface StopTime {
+interface StopTime {
 	trip_id: string;
 	arrival_time: string;
 	stop_id: string;
@@ -54,7 +55,17 @@ export const ROUTES_TABLE: DbTable = {
 
 export const TRIPS_TABLE: DbTable = {
 	name: "trips",
-	columns: ["route_id TEXT", "service_id TEXT", "trip_id TEXT"],
+	columns: [
+		"route_id TEXT",
+		"service_id TEXT",
+		"trip_id TEXT",
+		"direction_id INTEGER",
+	],
+};
+
+export const STOP_DIRECTIONS_TABLE: DbTable = {
+	name: "stop_directions",
+	columns: ["stop_id TEXT", "direction_id INTEGER"],
 };
 
 export const STOP_TIMES_TABLE: DbTable = {
