@@ -187,7 +187,7 @@ async function fetchStatus() {
 						data.status === "no_service"
 					) {
 						updateMessages(
-							data.nearest.stopName || "Bus Status",
+							"Bus Status",
 							"NO SERVICE",
 							`
 								The service is not currently running.<br>
@@ -195,7 +195,6 @@ async function fetchStatus() {
 									View timetables on TransLink
 								</a>
 							`,
-							data.nearest,
 						);
 
 						stopEverything();
@@ -213,7 +212,7 @@ async function fetchStatus() {
 						"Bus Status",
 						"ERROR",
 						`
-						Error loading status: ${e}<br>
+						Error loading status<br>
 						Please try again later.
 						`,
 					);

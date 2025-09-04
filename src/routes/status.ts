@@ -88,7 +88,7 @@ router.post("/status", async (req, res) => {
 						(entity) =>
 							entity.tripUpdate &&
 							entity.tripUpdate.trip.routeId ===
-								TARGET_ROUTE_ID &&
+							TARGET_ROUTE_ID &&
 							entity.tripUpdate.stopTimeUpdate?.some(
 								(stopTimeUpdate) =>
 									stopTimeUpdate.stopId === stopId,
