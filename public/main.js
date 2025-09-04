@@ -207,7 +207,7 @@ async function fetchStatus() {
 					}
 					startCountdown(data);
 				})
-				.catch((e) => {
+				.catch(() => {
 					updateMessages(
 						"Bus Status",
 						"ERROR",

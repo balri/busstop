@@ -174,7 +174,7 @@ h1 {
 	display: none;
 	filter: blur(1px);
 	height: 0.8rem;
-	left: 50%;
+	left: calc(45% + 4.5rem);
 	opacity: 0.8;
 	pointer-events: none;
 	position: absolute;
