@@ -7,7 +7,7 @@ import { importServiceDates } from "./service_dates";
 import { importServices } from "./services";
 import { importStopDirections } from "./stop_directions";
 import { importStopTimes } from "./stop_times";
-import { importStops } from "./stops";
+import { createJsonStops, importStops } from "./stops";
 import { importTrips } from "./trips";
 import { GTFS_DIR, GTFS_URL } from "./types";
 
@@ -50,6 +50,7 @@ async function main() {
 		await importStopDirections();
 		await importServices();
 		await importServiceDates();
+		await createJsonStops();
 		console.log("\n✅ All import functions completed successfully.");
 	} catch (err) {
 		console.error("❌ Error running filter scripts:", err);

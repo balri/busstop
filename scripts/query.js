@@ -5,10 +5,9 @@ const dbPath = path.join(path.resolve(process.cwd()), "gtfs.db");
 
 // const sql = "SELECT name FROM sqlite_master WHERE type='table'";
 const sql = `
-	SELECT stops.stop_id, stop_name, stop_lat, stop_lon
+	SELECT stops.stop_id, stop_name, stop_lat, stop_lon, direction_id
 		FROM stops
 		JOIN stop_directions ON stops.stop_id = stop_directions.stop_id
-		WHERE direction_id = ?
 `;
 
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -18,7 +17,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 	}
 });
 
-db.all(sql, [1], (err, rows) => {
+db.all(sql, (err, rows) => {
 	if (err) {
 		console.error("Query error:", err);
 	} else {

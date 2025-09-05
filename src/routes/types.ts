@@ -18,6 +18,7 @@ interface Stop {
 	stop_name: string;
 	stop_lat: string;
 	stop_lon: string;
+	direction_id: number;
 }
 
 export type Stops = Stop[];

@@ -33,6 +33,7 @@ export const ROUTES_INPUT_FILE = path.join(GTFS_DIR, "routes.txt");
 export const TRIPS_INPUT_FILE = path.join(GTFS_DIR, "trips.txt");
 export const STOP_TIMES_INPUT_FILE = path.join(GTFS_DIR, "stop_times.txt");
 export const STOPS_INPUT_FILE = path.join(GTFS_DIR, "stops.txt");
+export const STOPS_OUTPUT_FILE = path.join(process.cwd(), "stops.json");
 export const CALENDARS_INPUT_FILE = path.join(GTFS_DIR, "calendar.txt");
 export const CALENDAR_DATES_INPUT_FILE = path.join(
 	GTFS_DIR,
