@@ -22,7 +22,6 @@ https://dashboard.uptimerobot.com/monitors/801132204
 ACCEPTABLE_DELAY=60 // 60s
 MIN_DISTANCE=500 // 500m
 SECRET_KEYWORD=test
-TOKEN_EXPIRY_MS=900000 // 15 minutes
 ```
 
 # Puppeteer
@@ -65,3 +64,9 @@ npx terser public/main.js -o public/main.min.js
 ```
 npx cleancss -o public/style.min.css public/style.css
 ```
+
+# Change bus route
+
+1. Update `TARGET_ROUTE_ID` in `src/routes/status.ts`
+2. Run `npx ts-node src/filter/index.ts` to update feed
+3. Get route colour from `feeds/routes.txt` and update in `public/bus.svg`
