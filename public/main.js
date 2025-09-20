@@ -127,15 +127,17 @@ function updateMessages(busStop, status, message, nearest = null) {
 	statusText.textContent = status.toUpperCase();
 	timesText.innerHTML = message;
 	if (busStopDistance && nearest !== null) {
-		const { distance, stopLat, stopLon } = nearest;
-		let distanceText = `Distance: <b>${displayDistance(distance)}</b>`;
-		if (distance && distance > maxDistance) {
-			distanceText += `<br>
-			<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
-				View in Google Maps
-			</a>`;
-		}
-		busStopDistance.innerHTML = distanceText;
+		const { stopLat, stopLon } = nearest;
+		getLiveDistance(stopLat, stopLon, (distance) => {
+			let distanceText = `Distance: <b>${displayDistance(distance)}</b>`;
+			if (distance && distance > maxDistance) {
+				distanceText += `<br>
+				<a href="https://www.google.com/maps/search/?api=1&query=${stopLat},${stopLon}" target="_blank">
+					View in Google Maps
+				</a>`;
+			}
+			busStopDistance.innerHTML = distanceText;
+		});
 	}
 }
 
@@ -143,7 +145,7 @@ function displayDistance(distance) {
 	if (distance >= 1000) {
 		return (distance / 1000).toFixed(2) + "km";
 	} else {
-		return distance + "m";
+		return distance.toFixed(2) + "m";
 	}
 }
 
@@ -500,3 +502,29 @@ function cancelStarAnimation() {
 
 // Redraw stars on resize
 window.addEventListener("resize", startStarAnimation);
+
+function getLiveDistance(stopLat, stopLon, callback) {
+	let distance = null;
+	navigator.geolocation.getCurrentPosition((pos) => {
+		const { latitude, longitude } = pos.coords;
+		distance = haversine(latitude, longitude, stopLat, stopLon);
+		callback(distance);
+	});
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+	function toRad(x) {
+		return (x * Math.PI) / 180;
+	}
+	const R = 6371000; // meters
+	const dLat = toRad(lat2 - lat1);
+	const dLon = toRad(lon2 - lon1);
+	const a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos(toRad(lat1)) *
+			Math.cos(toRad(lat2)) *
+			Math.sin(dLon / 2) *
+			Math.sin(dLon / 2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	return R * c;
+}
