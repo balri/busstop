@@ -12,7 +12,7 @@ const router = express.Router();
 const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
 export const BUS_TOKEN = "f2d10fe4-45df-4463-8bf9-86aa475b1402";
-export const TARGET_ROUTE_ID = "61-4158";
+export const TARGET_ROUTE_ID = "61-4461";
 
 router.post("/status", async (req, res) => {
 	const { loc } = req.body;
