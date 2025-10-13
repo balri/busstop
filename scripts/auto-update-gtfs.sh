@@ -1,9 +1,10 @@
 #!/bin/bash
-
 set -e
 
-# Go to the repo directory
-cd /path/to/your/busstop
+export PATH="/opt/homebrew/bin:/usr/bin:/bin"
+
+# Change to the directory where this script is located
+cd "$(dirname "$0")/.."
 
 # Pull latest changes (optional, but recommended)
 git pull
@@ -12,7 +13,7 @@ git pull
 npx ts-node src/filter/index.ts
 
 # Add files you expect to change (adjust paths as needed)
-git add feeds/ routes.json stops.json
+git add stops.json
 
 # Only commit if there are changes
 if ! git diff --cached --quiet; then
