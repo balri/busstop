@@ -67,6 +67,7 @@ export async function createJsonStops(): Promise<void> {
 			);
 		});
 		fs.writeFileSync(STOPS_OUTPUT_FILE, JSON.stringify(stops, null, 2));
+		console.log(`Added ${stops.length} stops to ${STOPS_OUTPUT_FILE}`);
 	} catch (err) {
 		console.error("Error:", err);
 	} finally {

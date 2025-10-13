@@ -17,7 +17,7 @@ async function filterStopDirections(
 	return new Promise((resolve, reject) => {
 		const filtered: CsvRows = [];
 		db.all(
-			`SELECT DISTINCT stop_id, direction_id
+			`SELECT DISTINCT stop_id, direction_id, route_id
 			FROM ${STOP_TIMES_TABLE.name}
 			JOIN ${TRIPS_TABLE.name}
 			ON stop_times.trip_id = trips.trip_id

@@ -12,7 +12,6 @@ const router = express.Router();
 const GTFS_RT_URL =
 	"https://gtfsrt.api.translink.com.au/api/realtime/SEQ/TripUpdates";
 export const BUS_TOKEN = "f2d10fe4-45df-4463-8bf9-86aa475b1402";
-export const TARGET_ROUTE_ID = "61-4461";
 
 router.post("/status", async (req, res) => {
 	const { loc } = req.body;
@@ -63,6 +62,7 @@ router.post("/status", async (req, res) => {
 				stopLat: parseFloat(stop.stop_lat),
 				stopLon: parseFloat(stop.stop_lon),
 				distance: Math.round(dist),
+				routeId: stop.route_id,
 			};
 		}
 	}
@@ -76,6 +76,7 @@ router.post("/status", async (req, res) => {
 	const userIsNearEnough = minDist <= minDistance;
 
 	const stopId = nearest.stopId;
+	const routeId = nearest.routeId;
 	try {
 		const response = await axios.get(GTFS_RT_URL, {
 			responseType: "arraybuffer",
@@ -90,7 +91,7 @@ router.post("/status", async (req, res) => {
 			.filter(
 				(entity) =>
 					entity.tripUpdate &&
-					entity.tripUpdate.trip.routeId === TARGET_ROUTE_ID &&
+					entity.tripUpdate.trip.routeId === routeId &&
 					entity.tripUpdate.stopTimeUpdate?.some(
 						(stopTimeUpdate) => stopTimeUpdate.stopId === stopId,
 					),

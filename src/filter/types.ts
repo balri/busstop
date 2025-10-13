@@ -66,7 +66,7 @@ export const TRIPS_TABLE: DbTable = {
 
 export const STOP_DIRECTIONS_TABLE: DbTable = {
 	name: "stop_directions",
-	columns: ["stop_id TEXT", "direction_id INTEGER"],
+	columns: ["stop_id TEXT", "direction_id INTEGER", "route_id TEXT"],
 };
 
 export const STOP_TIMES_TABLE: DbTable = {
