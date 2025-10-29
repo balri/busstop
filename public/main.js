@@ -177,6 +177,19 @@ async function fetchStatus() {
 							stopEverything();
 						});
 						return null;
+					} else if (res.status === 500) {
+						res.json().then(() => {
+							updateMessages(
+								"Server Error",
+								"ERROR",
+								`
+							Error loading status<br>
+							Please try again later.
+							`,
+							);
+							stopEverything();
+						});
+						return null;
 					}
 					return res.json();
 				})

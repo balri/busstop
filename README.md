@@ -1,4 +1,5 @@
 # Web server
+
 ```
 node backend/index.js
 ```
@@ -8,6 +9,7 @@ node backend/index.js
 Download the feed from https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip
 
 Update the feed:
+
 ```
 npx ts-node src/filter/index.ts
 ```
@@ -27,21 +29,25 @@ SECRET_KEYWORD=test
 # Puppeteer
 
 Takes a screenshot of the site every hour by sending a mock date query param
+
 ```
 node scripts/screenshot.js
 ```
 
 # Linting
+
 ```
 npm run lint
 ```
 
 # Dependency check
+
 ```
 npx depcheck
 ```
 
 # Check for unused exports
+
 ```
 npm install -g ts-prune
 ts-prune
@@ -70,3 +76,9 @@ npx cleancss -o public/style.min.css public/style.css
 1. Update `TARGET_ROUTE_SHORT_NAME` in `src/filter/routes.ts`
 2. Run `npx ts-node src/filter/index.ts` to update feed
 3. Get route colour from `feeds/routes.txt` and update in `public/bus.svg`
+
+# Prettier
+
+```
+npm run format
+```

@@ -13,6 +13,6 @@ describe("Express App", () => {
 		const res = await request(app).get("/");
 		expect(res.status).toBe(200);
 		expect(res.text).toContain("window.BUS_TOKEN=");
-		expect(res.text).toContain("<!DOCTYPE html>");
+		expect(res.text).toContain("<!doctype html>");
 	});
 });

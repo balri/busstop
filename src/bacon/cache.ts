@@ -7,7 +7,11 @@ type CacheEntry = {
 
 const cache = new Map<string, CacheEntry>();
 
-export function setCache(key: string, data: Actor[] | Movie[], ttlSeconds: number = 300) {
+export function setCache(
+	key: string,
+	data: Actor[] | Movie[],
+	ttlSeconds: number = 300,
+) {
 	const expiresAt = Date.now() + ttlSeconds * 1000;
 	cache.set(key, { data, expiresAt });
 }

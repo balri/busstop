@@ -1,36 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Bus Status</title>
+		<link rel="icon" href="/bus.svg" type="image/x-icon" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="/style.min.css" />
+		<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+	</head>
 
-<head>
-	<meta charset="UTF-8" />
-	<title>Bus Status</title>
-	<link rel="icon" href="/bus.svg" type="image/x-icon" />
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="/style.min.css">
-	<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
-</head>
-
-<body>
-	<canvas id="star-canvas"></canvas>
-	<div id="sky">
-		<div id="sun" style="display:none;">☀️</div>
-		<div id="moon-stars" style="display:none;">
-			<span class="moon">🌕</span>
+	<body>
+		<canvas id="star-canvas"></canvas>
+		<div id="sky">
+			<div id="sun" style="display: none">☀️</div>
+			<div id="moon-stars" style="display: none">
+				<span class="moon">🌕</span>
+			</div>
 		</div>
-	</div>
-	<h1 id="bus-stop-name">Bus Status</h1>
-	<div id="bus-stop-distance" class="times"></div>
-	<div class="road">
-		<img id="bus-icon" class="bus" src="/bus.svg" alt="Bus" />
-		<div class="headlight-beam" id="headlight-beam"></div>
-		<div id="bus-stop" class="bus-stop hidden">🚏</div>
-	</div>
-	<div class="status-text" id="status-text">Loading...</div>
-	<div class="times" id="times-text"></div>
-	<a href="https://www.geocaching.com/account/messagecenter?recipientId=6d39c562-596e-43d8-9bb0-6285f731f563&gcCode=GCBCF1A"
-		id="help-link" target="_blank">Help</a>
-	<script src="/main.min.js"></script>
-
-</body>
-
+		<h1 id="bus-stop-name">Bus Status</h1>
+		<div id="bus-stop-distance" class="times"></div>
+		<div class="road">
+			<img id="bus-icon" class="bus" src="/bus.svg" alt="Bus" />
+			<div class="headlight-beam" id="headlight-beam"></div>
+			<div id="bus-stop" class="bus-stop hidden">🚏</div>
+		</div>
+		<div class="status-text" id="status-text">Loading...</div>
+		<div class="times" id="times-text"></div>
+		<a
+			href="https://www.geocaching.com/account/messagecenter?recipientId=6d39c562-596e-43d8-9bb0-6285f731f563&gcCode=GCBCF1A"
+			id="help-link"
+			target="_blank"
+			>Help</a
+		>
+		<script src="/main.min.js"></script>
+	</body>
 </html>
