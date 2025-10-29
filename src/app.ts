@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 
+import baconRouter from "./bacon/index";
 import statusRouter, { BUS_TOKEN } from "./routes/status";
 
 const app = express();
@@ -27,5 +28,8 @@ app.get("/", (_req, res) => {
 
 app.get("/health", (_req, res) => res.status(200).send("OK"));
 app.use("/", statusRouter);
+
+// Add bacon backend routes for bacon app (unrelated to bus stop)
+app.use("/bacon", baconRouter);
 
 export default app;
