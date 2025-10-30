@@ -12,7 +12,7 @@ export const TMDB_KEY = process.env["TMDB_API_KEY"]!;
 
 router.use(
 	cors({
-		origin: "https://bacon-topaz.vercel.app",
+		origin: ["https://bacon-topaz.vercel.app", "http://localhost:5173"],
 	}),
 );
 

@@ -25,10 +25,6 @@ function isMainstreamMovie(movie: Movie): boolean {
 	);
 }
 
-function isSafeActor(movies: Movie[], originalLength: number): boolean {
-	return movies.length >= 3 && movies.length / originalLength > 0.3;
-}
-
 export const movieCredits = async (actorId: number): Promise<Movie[]> => {
 	const cacheKey = `movies-${actorId}`;
 	const cached = getCache(cacheKey);
@@ -62,7 +58,7 @@ export const movieCredits = async (actorId: number): Promise<Movie[]> => {
 	}
 
 	const movies = data.cast.filter(isMainstreamMovie);
-	if (!isSafeActor(movies, data.cast.length)) {
+	if (movies.length < 5) {
 		setCache(cacheKey, [], 3600);
 		return [];
 	}
