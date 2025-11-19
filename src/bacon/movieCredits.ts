@@ -58,10 +58,6 @@ export const movieCredits = async (actorId: number): Promise<Movie[]> => {
 	}
 
 	const movies = data.cast.filter(isMainstreamMovie);
-	if (movies.length < 5) {
-		setCache(cacheKey, [], 3600);
-		return [];
-	}
 	setCache(cacheKey, movies, 3600);
 
 	return movies;
