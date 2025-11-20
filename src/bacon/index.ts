@@ -33,8 +33,8 @@ const asyncHandler =
 			next: NextFunction,
 		) => Promise<unknown>,
 	) =>
-	(req: Request, res: Response, next: NextFunction) =>
-		Promise.resolve(fn(req, res, next)).catch(next);
+		(req: Request, res: Response, next: NextFunction) =>
+			Promise.resolve(fn(req, res, next)).catch(next);
 
 router.get(
 	"/api/random-actor",
@@ -96,7 +96,7 @@ router.get(
 				const movies = await movieCredits(person.id).then(
 					(movies) => movies,
 				);
-				if (movies.length > 0) {
+				if (movies.length >= 5) {
 					return res.json(person);
 				}
 			}
