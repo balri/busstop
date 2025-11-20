@@ -33,8 +33,8 @@ const asyncHandler =
 			next: NextFunction,
 		) => Promise<unknown>,
 	) =>
-		(req: Request, res: Response, next: NextFunction) =>
-			Promise.resolve(fn(req, res, next)).catch(next);
+	(req: Request, res: Response, next: NextFunction) =>
+		Promise.resolve(fn(req, res, next)).catch(next);
 
 router.get(
 	"/api/random-actor",
