@@ -1,7 +1,7 @@
 import { Actor, Movie } from "./types";
 
 type CacheEntry = {
-	data: Actor[] | Movie[];
+	data: Actor | Actor[] | Movie[];
 	expiresAt: number;
 };
 
@@ -9,7 +9,7 @@ const cache = new Map<string, CacheEntry>();
 
 export function setCache(
 	key: string,
-	data: Actor[] | Movie[],
+	data: Actor | Actor[] | Movie[],
 	ttlSeconds: number = 300,
 ) {
 	const expiresAt = Date.now() + ttlSeconds * 1000;

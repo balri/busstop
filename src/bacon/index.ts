@@ -1,6 +1,7 @@
 import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
+import { DateTime } from "luxon";
 import fetch from "node-fetch";
 
 import { getCache, setCache } from "./cache";
@@ -97,6 +98,89 @@ router.get(
 					(movies) => movies,
 				);
 				if (movies.length >= 5) {
+					return res.json(person);
+				}
+			}
+
+			retries++;
+		}
+
+		return res.status(404).json({
+			error: "No suitable actor found after several attempts.",
+		});
+	}),
+);
+
+router.get(
+	"/api/daily-actor",
+	asyncHandler(async (_req: Request, res: Response) => {
+		const today = DateTime.now().toISODate();
+		const cacheKey = `daily-actor-${today}`;
+		let actor = getCache(cacheKey);
+		if (actor) {
+			console.log(`Returning cached daily actor for ${today}`);
+			return res.json(actor);
+		}
+
+		// Use the same logic as /api/random-actor to select a new actor
+		const MAX_RETRIES = 10;
+		let retries = 0;
+		while (retries < MAX_RETRIES) {
+			const page = Math.floor(Math.random() * 500);
+			const pageCacheKey = "random-actor-page-" + page;
+			let data: { results: Actor[] };
+
+			const cached = getCache(pageCacheKey);
+			if (cached) {
+				console.log(`Cached popular actors for page ${page}`);
+				data = { results: cached as Actor[] };
+			} else {
+				console.log(`Uncached popular actors for page ${page}`);
+				let resp;
+				try {
+					resp = await fetch(
+						`${TMDB_BASE_URL}/person/popular?page=${page}&api_key=${TMDB_KEY}`,
+					);
+				} catch (err) {
+					console.error("Network error fetching TMDB:", err);
+					return res
+						.status(502)
+						.json({ error: "Failed to reach TMDB." });
+				}
+				if (!resp.ok) {
+					const errorText = await resp.text();
+					console.error("TMDB error:", resp.status, errorText);
+					return res.status(resp.status).json({
+						error: `TMDB error: ${resp.status}`,
+						message: errorText,
+					});
+				}
+				try {
+					data = (await resp.json()) as { results: Actor[] };
+				} catch (err) {
+					console.error("Invalid JSON from TMDB:", err);
+					return res
+						.status(502)
+						.json({ error: "Invalid response from TMDB." });
+				}
+				setCache(pageCacheKey, data.results, 3600);
+			}
+
+			const shuffled = data.results.sort(() => 0.5 - Math.random());
+
+			for (const person of shuffled) {
+				if (
+					!person.profile_path ||
+					person.known_for_department !== "Acting"
+				) {
+					continue;
+				}
+
+				const movies = await movieCredits(person.id).then(
+					(movies) => movies,
+				);
+				if (movies.length >= 5) {
+					setCache(cacheKey, person, 86400); // Cache for 24 hours
 					return res.json(person);
 				}
 			}
