@@ -114,7 +114,7 @@ router.get(
 router.get(
 	"/api/daily-actor",
 	asyncHandler(async (_req: Request, res: Response) => {
-		const today = DateTime.now().toISODate();
+		const today = DateTime.now().setZone("Australia/Brisbane").toISODate();
 		const cacheKey = `daily-actor-${today}`;
 		let actor = getCache(cacheKey);
 		if (actor) {
