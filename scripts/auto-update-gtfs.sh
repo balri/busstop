@@ -9,6 +9,9 @@ cd "$(dirname "$0")/.."
 # Pull latest changes (optional, but recommended)
 git pull
 
+# Install dependencies
+npm ci || npm install
+
 # Run your GTFS import script (adjust as needed)
 npx ts-node src/filter/index.ts
 
