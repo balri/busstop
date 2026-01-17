@@ -1,10 +1,10 @@
-import { TMDB_KEY } from ".";
 import { getCache, setCache } from "./cache";
 import {
 	EXCLUDED_GENRES,
 	MAINSTREAM_GENRES,
 	Movie,
 	TMDB_BASE_URL,
+	TMDB_KEY,
 } from "./types";
 
 function isMainstreamMovie(movie: Movie): boolean {

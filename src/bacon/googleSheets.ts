@@ -4,12 +4,12 @@ import { google } from "googleapis";
 const SHEET_ID = process.env["BACON_SHEET_ID"] || "";
 const SHEET_RANGE = "DailyActor!A:D";
 
-const COLUMN_INDEX = 0;
-const COLUMN_DATE = 1;
-const COLUMN_ACTOR_ID = 2;
-// const COLUMN_ACTOR_NAME = 3;
-// const COLUMN_BACON_NUMBER = 4;
-// const COLUMN_DATE_MODIFIED = 5;
+export const COLUMN_INDEX = 0;
+export const COLUMN_DATE = 1;
+export const COLUMN_ACTOR_ID = 2;
+export const COLUMN_BACON_NUMBER = 3;
+export const COLUMN_ACTOR_NAME = 4;
+export const COLUMN_DATE_MODIFIED = 5;
 
 const auth = new JWT({
 	email: process.env["BACON_SERVICE_ACCOUNT_EMAIL"] || "",
@@ -21,7 +21,7 @@ const sheets = google.sheets({ version: "v4", auth });
 
 export async function getDailyActorFromSheet(
 	date: string | null,
-): Promise<string | null> {
+): Promise<string[] | null> {
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: SHEET_ID,
 		range: SHEET_RANGE,
@@ -29,7 +29,7 @@ export async function getDailyActorFromSheet(
 	const rows = res.data.values || [];
 	for (const row of rows) {
 		if (row[COLUMN_DATE] === date) {
-			return row[COLUMN_ACTOR_ID];
+			return row;
 		}
 	}
 	return null;
@@ -39,6 +39,7 @@ export async function setDailyActorInSheet(
 	date: string | null,
 	actorId: string,
 	actorName: string,
+	baconNumber: number | null,
 ): Promise<void> {
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: SHEET_ID,
@@ -63,7 +64,7 @@ export async function setDailyActorInSheet(
 							date,
 							actorId,
 							actorName,
-							0, // TODO: baconNumber,
+							baconNumber,
 							new Date().toISOString(),
 						],
 					],
@@ -73,6 +74,7 @@ export async function setDailyActorInSheet(
 			break;
 		}
 	}
+
 	if (!found) {
 		const nextIndex = maxIndex + 1;
 		const dateAdded = new Date().toISOString();
@@ -82,7 +84,14 @@ export async function setDailyActorInSheet(
 			valueInputOption: "RAW",
 			requestBody: {
 				values: [
-					[String(nextIndex), date, actorId, actorName, 0, dateAdded],
+					[
+						String(nextIndex),
+						date,
+						actorId,
+						actorName,
+						baconNumber,
+						dateAdded,
+					],
 				],
 			},
 		});

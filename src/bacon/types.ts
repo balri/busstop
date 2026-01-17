@@ -7,6 +7,7 @@ export interface Actor {
 	known_for: Movie[];
 	known_for_department: string;
 	adult: boolean;
+	bacon_number?: number;
 }
 
 export interface Movie {
@@ -69,3 +70,5 @@ export const MAINSTREAM_GENRES = [
 	GENRE_THRILLER,
 	GENRE_WESTERN,
 ];
+
+export const TMDB_KEY = process.env["TMDB_API_KEY"]!;

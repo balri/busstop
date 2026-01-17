@@ -1,10 +1,10 @@
 This folder is unrelated to the bus stop. It serves as a backend for another app.
 This code has been copied from https://github.com/balri/bacon so that this server can be used to serve that site
 
-Get a random actor:
+Get the daily actor:
 
 ```
-http://localhost:3000/bacon/api/random-actor
+http://localhost:3000/bacon/api/daily-actor
 ```
 
 Get movie credits for Kevin Bacon:
