@@ -187,6 +187,15 @@ router.get(
 	}),
 );
 
+router.get(
+	"/api/bacon-number/:actorId",
+	asyncHandler(async (req: Request, res: Response) => {
+		const { actorId } = req.params;
+		const baconNumber = await getBaconNumber(Number(actorId));
+		return res.json({ baconNumber });
+	}),
+);
+
 router.use(
 	(err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 		const error = err as Error;
