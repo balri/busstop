@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import fetch from "node-fetch";
 
 import { getCache, setCache } from "./cache";
+import { getDailyActorFromSheet, setDailyActorInSheet } from "./googleSheets";
 import { movieCredits } from "./movieCredits";
 import { Actor, TMDB_BASE_URL } from "./types";
 
@@ -122,6 +123,38 @@ router.get(
 			return res.json(actor);
 		}
 
+		const actorIdOrNull = await getDailyActorFromSheet(today);
+		if (typeof actorIdOrNull === "string" && actorIdOrNull.length > 0) {
+			let resp;
+			try {
+				resp = await fetch(
+					`${TMDB_BASE_URL}/person/${actorIdOrNull}?api_key=${TMDB_KEY}`,
+				);
+			} catch (err) {
+				console.error("Network error fetching TMDB:", err);
+				return res.status(502).json({ error: "Failed to reach TMDB." });
+			}
+			if (!resp.ok) {
+				const errorText = await resp.text();
+				console.error("TMDB error:", resp.status, errorText);
+				return res.status(resp.status).json({
+					error: `TMDB error: ${resp.status}`,
+					message: errorText,
+				});
+			}
+			let actor;
+			try {
+				actor = await resp.json();
+			} catch (err) {
+				console.error("Invalid JSON from TMDB:", err);
+				return res
+					.status(502)
+					.json({ error: "Invalid response from TMDB." });
+			}
+			setCache(cacheKey, actor, 86400); // Cache for 24 hours
+			return res.json(actor);
+		}
+
 		// Use the same logic as /api/random-actor to select a new actor
 		const MAX_RETRIES = 10;
 		let retries = 0;
@@ -171,7 +204,8 @@ router.get(
 			for (const person of shuffled) {
 				if (
 					!person.profile_path ||
-					person.known_for_department !== "Acting"
+					person.known_for_department !== "Acting" ||
+					person.adult
 				) {
 					continue;
 				}
@@ -181,6 +215,7 @@ router.get(
 				);
 				if (movies.length >= 5) {
 					setCache(cacheKey, person, 86400); // Cache for 24 hours
+					await setDailyActorInSheet(today, String(person.id ?? ""));
 					return res.json(person);
 				}
 			}

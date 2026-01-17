@@ -6,6 +6,7 @@ export interface Actor {
 	profile_path?: string;
 	known_for: Movie[];
 	known_for_department: string;
+	adult: boolean;
 }
 
 export interface Movie {

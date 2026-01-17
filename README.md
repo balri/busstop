@@ -40,6 +40,12 @@ node scripts/screenshot.js
 npm run lint
 ```
 
+To fix:
+
+```
+npm run lint:fix
+```
+
 # Dependency check
 
 ```
