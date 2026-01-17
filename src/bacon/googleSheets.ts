@@ -7,7 +7,9 @@ const SHEET_RANGE = "DailyActor!A:D";
 const COLUMN_INDEX = 0;
 const COLUMN_DATE = 1;
 const COLUMN_ACTOR_ID = 2;
-// const COLUMN_DATE_MODIFIED = 3;
+// const COLUMN_ACTOR_NAME = 3;
+// const COLUMN_BACON_NUMBER = 4;
+// const COLUMN_DATE_MODIFIED = 5;
 
 const auth = new JWT({
 	email: process.env["BACON_SERVICE_ACCOUNT_EMAIL"] || "",
@@ -36,6 +38,7 @@ export async function getDailyActorFromSheet(
 export async function setDailyActorInSheet(
 	date: string | null,
 	actorId: string,
+	actorName: string,
 ): Promise<void> {
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: SHEET_ID,
@@ -59,6 +62,8 @@ export async function setDailyActorInSheet(
 							row[COLUMN_INDEX],
 							date,
 							actorId,
+							actorName,
+							0, // TODO: baconNumber,
 							new Date().toISOString(),
 						],
 					],
@@ -76,7 +81,9 @@ export async function setDailyActorInSheet(
 			range: SHEET_RANGE,
 			valueInputOption: "RAW",
 			requestBody: {
-				values: [[String(nextIndex), date, actorId, dateAdded]],
+				values: [
+					[String(nextIndex), date, actorId, actorName, 0, dateAdded],
+				],
 			},
 		});
 	}

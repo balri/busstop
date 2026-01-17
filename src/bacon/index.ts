@@ -215,7 +215,11 @@ router.get(
 				);
 				if (movies.length >= 5) {
 					setCache(cacheKey, person, 86400); // Cache for 24 hours
-					await setDailyActorInSheet(today, String(person.id ?? ""));
+					await setDailyActorInSheet(
+						today,
+						String(person.id ?? ""),
+						person.name ?? "",
+					);
 					return res.json(person);
 				}
 			}
