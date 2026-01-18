@@ -148,13 +148,13 @@ router.get(
 				if (movies.length >= 5) {
 					setCache(cacheKey, person, 86400); // Cache for 24 hours
 
-					const baconNumber = await getBaconNumber(person.id);
+					const baconNumberResult = await getBaconNumber(person.id);
 
 					await setDailyActorInSheet(
 						today,
 						String(person.id ?? ""),
 						person.name ?? "",
-						baconNumber,
+						baconNumberResult?.depth ?? 0,
 					);
 					return res.json(person);
 				}
@@ -184,15 +184,6 @@ router.get(
 		const { movieId } = req.params;
 		const actors = await actorCredits(Number(movieId));
 		return res.json(actors);
-	}),
-);
-
-router.get(
-	"/api/bacon-number/:actorId",
-	asyncHandler(async (req: Request, res: Response) => {
-		const { actorId } = req.params;
-		const baconNumber = await getBaconNumber(Number(actorId));
-		return res.json({ baconNumber });
 	}),
 );
 
