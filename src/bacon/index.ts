@@ -5,7 +5,6 @@ import { DateTime } from "luxon";
 import fetch from "node-fetch";
 
 import { actorCredits } from "./actorCredits";
-import { getBaconNumber } from "./baconNumber";
 import { getCache, setCache } from "./cache";
 import {
 	COLUMN_ACTOR_ID,
@@ -148,13 +147,11 @@ router.get(
 				if (movies.length >= 5) {
 					setCache(cacheKey, person, 86400); // Cache for 24 hours
 
-					const baconNumberResult = await getBaconNumber(person.id);
-
 					await setDailyActorInSheet(
 						today,
 						String(person.id ?? ""),
 						person.name ?? "",
-						baconNumberResult?.depth ?? 0,
+						0,
 					);
 					return res.json(person);
 				}
