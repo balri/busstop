@@ -84,35 +84,51 @@ router.get(
 			.setZone("Australia/Brisbane")
 			.plus({ days: 1 })
 			.toISODate();
-		console.log(tomorrow);
+
 		let actor = getDailyActorFromCache(tomorrow);
 		if (actor) {
 			return res
 				.status(200)
 				.json({ message: "Daily actor for tomorrow is already set." });
 		}
-		console.log("Not in cache");
+
 		actor = await getDailyActorFromSheet(tomorrow);
 		if (actor) {
 			return res
 				.status(200)
 				.json({ message: "Daily actor for tomorrow is already set." });
 		}
-		console.log("Not in sheet");
-		actor = await getRandomActor();
-		if (!actor) {
-			return res
-				.status(500)
-				.json({ error: "Failed to fetch a random actor." });
+
+		const MAX_RETRIES = 10;
+		let retries = 0;
+		while (retries < MAX_RETRIES) {
+			actor = await getRandomActor();
+			if (!actor) {
+				return res
+					.status(500)
+					.json({ error: "Failed to fetch a random actor." });
+			}
+
+			const baconNumberResult = await getBaconNumber(
+				Number(actor.id),
+				6,
+				0,
+			);
+
+			if (baconNumberResult) {
+				await setDailyActorInSheet(tomorrow, actor, baconNumberResult);
+				return res.status(200).json({
+					message: "Daily actor for tomorrow has been set.",
+				});
+			}
+
+			retries++;
 		}
 
-		const baconNumberResult = await getBaconNumber(Number(actor.id), 6, 0);
-
-		await setDailyActorInSheet(tomorrow, actor, baconNumberResult);
-
-		return res
-			.status(200)
-			.json({ message: "Daily actor for tomorrow has been set." });
+		return res.status(404).json({
+			message:
+				"Failed to set daily actor for tomorrow after multiple attempts.",
+		});
 	}),
 );
 

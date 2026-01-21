@@ -6,7 +6,7 @@ import { setCache } from "./cache";
 import { Actor, TMDB_BASE_URL, TMDB_KEY } from "./types";
 
 const SHEET_ID = process.env["BACON_SHEET_ID"] || "";
-const SHEET_RANGE = "DailyActor!A:D";
+const SHEET_RANGE = "DailyActor!A:G";
 
 export const COLUMN_INDEX = 0;
 export const COLUMN_DATE = 1;
@@ -90,7 +90,7 @@ export async function setDailyActorInSheet(
 		if (Array.isArray(row) && row[COLUMN_DATE] === date) {
 			await sheets.spreadsheets.values.update({
 				spreadsheetId: SHEET_ID,
-				range: `DailyActor!A${i + 1}:D${i + 1}`,
+				range: `DailyActor!A${i + 1}:G${i + 1}`,
 				valueInputOption: "RAW",
 				requestBody: {
 					values: [
