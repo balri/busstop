@@ -16,7 +16,7 @@ export function setCache(
 	cache.set(key, { data, expiresAt });
 }
 
-export function getCache(key: string) {
+export function getCache(key: string): Actor | Actor[] | Movie[] | null {
 	const entry = cache.get(key);
 	if (!entry) return null;
 	if (Date.now() > entry.expiresAt) {
@@ -28,4 +28,9 @@ export function getCache(key: string) {
 
 export function clearCache() {
 	cache.clear();
+}
+
+export function getDailyActorFromCache(date: string | null): Actor | null {
+	const cacheKey = `daily-actor-${date}`;
+	return getCache(cacheKey) as Actor | null;
 }

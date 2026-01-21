@@ -1,5 +1,5 @@
 #!/bin/bash
-ENDPOINT="https://busstop-ufgc.onrender.com/bacon/api/daily-actor"
+ENDPOINT="https://busstop-ufgc.onrender.com/bacon/api/prime-daily-actor"
 
 start=$(date +%s)
 body=$(mktemp)

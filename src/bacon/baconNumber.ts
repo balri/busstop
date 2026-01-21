@@ -10,7 +10,7 @@ type BaconNumberPathStep = {
 	movieTitle?: string;
 };
 
-type BaconNumberResult = {
+export type BaconNumberResult = {
 	path: BaconNumberPathStep[];
 	depth: number;
 };
