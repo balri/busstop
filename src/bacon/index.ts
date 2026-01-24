@@ -3,7 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { DateTime } from "luxon";
 
-import { actorCredits, getRandomActor } from "./actorCredits";
+import { actorCredits, getActor, getRandomActor } from "./actorCredits";
 import { getBaconNumber } from "./baconNumber";
 import { getDailyActorFromCache } from "./cache";
 import { getDailyActorFromSheet, setDailyActorInSheet } from "./googleSheets";
@@ -136,12 +136,12 @@ router.get(
 	"/api/actor/:actorId",
 	asyncHandler(async (req: Request, res: Response) => {
 		const { actorId } = req.params;
-		const baconNumberResult = await getBaconNumber(Number(actorId), 6, 0);
+		const actor = await getActor(Number(actorId));
 
-		if (baconNumberResult) {
-			return res.status(200).json(baconNumberResult);
+		if (actor) {
+			return res.status(200).json(actor);
 		} else {
-			return res.status(404).json({ error: "Bacon number not found." });
+			return res.status(404).json({ error: "Actor not found." });
 		}
 	}),
 );
