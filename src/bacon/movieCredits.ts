@@ -25,7 +25,10 @@ function isMainstreamMovie(movie: Movie): boolean {
 	);
 }
 
-export const movieCredits = async (actorId: number): Promise<Movie[]> => {
+export const movieCredits = async (
+	actorId: number,
+	filterMovies: boolean = true,
+): Promise<Movie[]> => {
 	const cacheKey = `movies-${actorId}`;
 	const cached = getCache(cacheKey);
 	if (cached) {
@@ -57,7 +60,11 @@ export const movieCredits = async (actorId: number): Promise<Movie[]> => {
 		return [];
 	}
 
-	const movies = data.cast.filter(isMainstreamMovie);
+	let movies = data.cast;
+	if (filterMovies) {
+		movies = data.cast.filter(isMainstreamMovie);
+	}
+
 	setCache(cacheKey, movies, 3600);
 
 	return movies;

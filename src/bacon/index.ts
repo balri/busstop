@@ -139,7 +139,11 @@ router.get(
 		const actor = await getActor(Number(actorId));
 
 		if (actor) {
-			return res.status(200).json(actor);
+			const movies = await movieCredits(Number(actorId), false);
+			return res.status(200).json({
+				...actor,
+				movies,
+			});
 		} else {
 			return res.status(404).json({ error: "Actor not found." });
 		}
