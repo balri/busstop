@@ -132,6 +132,20 @@ router.get(
 	}),
 );
 
+router.get(
+	"/api/actor/:actorId",
+	asyncHandler(async (req: Request, res: Response) => {
+		const { actorId } = req.params;
+		const baconNumberResult = await getBaconNumber(Number(actorId), 6, 0);
+
+		if (baconNumberResult) {
+			return res.status(200).json(baconNumberResult);
+		} else {
+			return res.status(404).json({ error: "Bacon number not found." });
+		}
+	}),
+);
+
 router.use(
 	(err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 		const error = err as Error;

@@ -1,9 +1,10 @@
 import { JWT } from "google-auth-library";
 import { google } from "googleapis";
 
+import { getActor } from "./actorCredits";
 import { BaconNumberResult } from "./baconNumber";
 import { setCache } from "./cache";
-import { Actor, TMDB_BASE_URL, TMDB_KEY } from "./types";
+import { Actor } from "./types";
 
 const SHEET_ID = process.env["BACON_SHEET_ID"] || "";
 const SHEET_RANGE = "DailyActor!A:G";
@@ -41,27 +42,11 @@ export async function getDailyActorFromSheet(
 	}
 
 	if (dailyActor) {
-		let resp;
-		try {
-			resp = await fetch(
-				`${TMDB_BASE_URL}/person/${dailyActor[COLUMN_ACTOR_ID]}?api_key=${TMDB_KEY}`,
-			);
-		} catch (err) {
-			console.error("Network error fetching TMDB:", err);
+		const actor = await getActor(Number(dailyActor[COLUMN_ACTOR_ID]));
+		if (!actor) {
 			return null;
 		}
-		if (!resp.ok) {
-			const errorText = await resp.text();
-			console.error("TMDB error:", resp.status, errorText);
-			return null;
-		}
-		let actor;
-		try {
-			actor = await resp.json();
-		} catch (err) {
-			console.error("Invalid JSON from TMDB:", err);
-			return null;
-		}
+
 		actor.bacon_number = Number(dailyActor[COLUMN_BACON_NUMBER] || 0);
 		const cacheKey = `daily-actor-${date}`;
 		setCache(cacheKey, actor, 86400); // Cache for 24 hours

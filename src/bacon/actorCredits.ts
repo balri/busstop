@@ -103,3 +103,28 @@ export const getRandomActor = async (): Promise<Actor | null> => {
 
 	return null;
 };
+
+export const getActor = async (actorId: number): Promise<Actor | null> => {
+	let resp;
+	try {
+		resp = await fetch(
+			`${TMDB_BASE_URL}/person/${actorId}?api_key=${TMDB_KEY}`,
+		);
+	} catch (err) {
+		console.error("Network error fetching TMDB:", err);
+		return null;
+	}
+	if (!resp.ok) {
+		const errorText = await resp.text();
+		console.error("TMDB error:", resp.status, errorText);
+		return null;
+	}
+	let actor;
+	try {
+		actor = await resp.json();
+		return actor;
+	} catch (err) {
+		console.error("Invalid JSON from TMDB:", err);
+		return null;
+	}
+};
