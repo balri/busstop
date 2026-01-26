@@ -7,7 +7,6 @@
     "stop_lat": -27.470675,
     "stop_lon": 153.024755,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -21,7 +20,6 @@
     "stop_lat": -27.459242,
     "stop_lon": 152.99807,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -35,7 +33,6 @@
     "stop_lat": -27.494703,
     "stop_lon": 153.058566,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -49,7 +46,6 @@
     "stop_lat": -27.468446,
     "stop_lon": 153.024066,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -63,7 +59,6 @@
     "stop_lat": -27.468046,
     "stop_lon": 153.02343,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -77,7 +72,6 @@
     "stop_lat": -27.465942,
     "stop_lon": 153.0192,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -91,7 +85,6 @@
     "stop_lat": -27.466083,
     "stop_lon": 153.019374,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -105,7 +98,6 @@
     "stop_lat": -27.473232,
     "stop_lon": 153.019415,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -119,7 +111,6 @@
     "stop_lat": -27.473452,
     "stop_lon": 153.019127,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -133,7 +124,6 @@
     "stop_lat": -27.459346,
     "stop_lon": 152.992833,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -147,7 +137,6 @@
     "stop_lat": -27.459042,
     "stop_lon": 152.993397,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -161,7 +150,6 @@
     "stop_lat": -27.459135,
     "stop_lon": 152.998149,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -175,7 +163,6 @@
     "stop_lat": -27.458036,
     "stop_lon": 152.986977,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -189,7 +176,6 @@
     "stop_lat": -27.458126,
     "stop_lon": 152.986817,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -203,7 +189,6 @@
     "stop_lat": -27.452989,
     "stop_lon": 152.988472,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -217,7 +202,6 @@
     "stop_lat": -27.453522,
     "stop_lon": 152.988232,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -231,7 +215,6 @@
     "stop_lat": -27.486079,
     "stop_lon": 153.034648,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -245,7 +228,6 @@
     "stop_lat": -27.484505,
     "stop_lon": 153.028213,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -259,7 +241,6 @@
     "stop_lat": -27.480721,
     "stop_lon": 153.021835,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -273,7 +254,6 @@
     "stop_lat": -27.486011,
     "stop_lon": 153.035078,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -287,7 +267,6 @@
     "stop_lat": -27.484413,
     "stop_lon": 153.028393,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -301,7 +280,6 @@
     "stop_lat": -27.481023,
     "stop_lon": 153.022209,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -315,7 +293,6 @@
     "stop_lat": -27.444274,
     "stop_lon": 152.99153,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -329,7 +306,6 @@
     "stop_lat": -27.444274,
     "stop_lon": 152.99153,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -343,7 +319,6 @@
     "stop_lat": -27.494449,
     "stop_lon": 153.057494,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -357,7 +332,6 @@
     "stop_lat": -27.498513,
     "stop_lon": 153.049707,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -371,7 +345,6 @@
     "stop_lat": -27.492647,
     "stop_lon": 153.041284,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -385,7 +358,6 @@
     "stop_lat": -27.491992,
     "stop_lon": 153.040728,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -399,7 +371,6 @@
     "stop_lat": -27.49863,
     "stop_lon": 153.049224,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -413,7 +384,6 @@
     "stop_lat": -27.497829,
     "stop_lon": 153.04465,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -427,7 +397,6 @@
     "stop_lat": -27.497811,
     "stop_lon": 153.043994,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -441,7 +410,6 @@
     "stop_lat": -27.463634,
     "stop_lon": 153.011536,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -455,7 +423,6 @@
     "stop_lat": -27.463567,
     "stop_lon": 153.011685,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -469,7 +436,6 @@
     "stop_lat": -27.461926,
     "stop_lon": 153.006856,
     "direction_id": 0,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"
@@ -483,7 +449,6 @@
     "stop_lat": -27.461786,
     "stop_lon": 153.005921,
     "direction_id": 1,
-    "route_id": "61-4564",
     "route_ids": [
       "61-4564",
       "61-4660"

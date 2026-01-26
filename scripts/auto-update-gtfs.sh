@@ -19,21 +19,9 @@ npx ts-node src/filter/index.ts
 git add stops.json
 
 # Only commit if there are changes
-
 if ! git diff --cached --quiet; then
   git commit -m "Auto-update GTFS data and config"
-  # Check if running interactively (manually)
-  if [ -t 0 ]; then
-    read -p "Push commit to remote? [y/N]: " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-      git push
-    else
-      echo "Push cancelled. Commit is local only."
-    fi
-  else
-    # Non-interactive (e.g., cron), just push
-    git push
-  fi
+  git push
 else
   echo "No changes to commit."
 fi
