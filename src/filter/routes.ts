@@ -13,18 +13,24 @@ import {
 
 export const TARGET_ROUTE_SHORT_NAME = "61";
 
-export async function getRouteId(db: sqlite3.Database): Promise<string> {
+export async function getRouteIds(db: sqlite3.Database): Promise<string[]> {
 	return new Promise((resolve, reject) => {
-		db.get(
-			`SELECT route_id FROM ${ROUTES_TABLE.name} WHERE route_short_name = ? LIMIT 1`,
+		db.all(
+			`SELECT route_id FROM ${ROUTES_TABLE.name} WHERE route_short_name = ?`,
 			[TARGET_ROUTE_SHORT_NAME],
-			(err, row: CsvRow) => {
+			(err, rows: CsvRows) => {
 				if (err) {
 					reject(err);
 					return;
 				}
-				if (row && row["route_id"]) {
-					resolve(row["route_id"]);
+				if (rows && rows.length > 0) {
+					resolve(
+						rows
+							.map((row) => row["route_id"])
+							.filter(
+								(id): id is string => typeof id === "string",
+							),
+					);
 				} else {
 					reject(
 						new Error(

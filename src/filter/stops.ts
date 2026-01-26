@@ -9,6 +9,7 @@ import {
 	CsvRows,
 	DB_FILE,
 	STOP_TABLE,
+	Stops,
 	STOPS_INPUT_FILE,
 	STOPS_OUTPUT_FILE,
 } from "./types";
@@ -66,8 +67,36 @@ export async function createJsonStops(): Promise<void> {
 				},
 			);
 		});
-		fs.writeFileSync(STOPS_OUTPUT_FILE, JSON.stringify(stops, null, 2));
-		console.log(`Added ${stops.length} stops to ${STOPS_OUTPUT_FILE}`);
+
+		// Merge stops with same stop_id and direction_id, combine route_ids
+		const merged: Record<string, Stops> = {};
+		for (const stop of stops) {
+			const key = `${stop["stop_id"]}|${stop["direction_id"]}`;
+			if (!merged[key]) {
+				merged[key] = {
+					stop_id: stop["stop_id"] || "",
+					stop_code: stop["stop_code"] || "",
+					stop_name: stop["stop_name"] || "",
+					stop_desc: stop["stop_desc"] || "",
+					stop_lat: parseFloat(stop["stop_lat"] || "0"),
+					stop_lon: parseFloat(stop["stop_lon"] || "0"),
+					direction_id: parseInt(stop["direction_id"] || "0", 10),
+					route_ids: [stop["route_id"] || ""],
+				};
+			} else {
+				if (!merged[key].route_ids.includes(stop["route_id"] || "")) {
+					merged[key].route_ids.push(stop["route_id"] || "");
+				}
+			}
+		}
+		const mergedStops = Object.values(merged);
+		fs.writeFileSync(
+			STOPS_OUTPUT_FILE,
+			JSON.stringify(mergedStops, null, 2),
+		);
+		console.log(
+			`Added ${mergedStops.length} stops to ${STOPS_OUTPUT_FILE}`,
+		);
 	} catch (err) {
 		console.error("Error:", err);
 	} finally {

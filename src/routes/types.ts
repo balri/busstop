@@ -5,6 +5,7 @@ export interface NearestStop {
 	stopLon: number;
 	distance: number;
 	routeId: string;
+	routeIds: string[];
 }
 
 export interface NextBus {
@@ -21,6 +22,7 @@ interface Stop {
 	stop_lon: string;
 	direction_id: number;
 	route_id: string;
+	route_ids: string[];
 }
 
 export type Stops = Stop[];
