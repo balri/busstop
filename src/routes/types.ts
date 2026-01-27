@@ -4,7 +4,6 @@ export interface NearestStop {
 	stopLat: number;
 	stopLon: number;
 	distance: number;
-	routeId: string;
 	routeIds: string[];
 }
 
@@ -21,7 +20,6 @@ interface Stop {
 	stop_lat: string;
 	stop_lon: string;
 	direction_id: number;
-	route_id: string;
 	route_ids: string[];
 }
 

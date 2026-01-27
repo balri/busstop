@@ -62,7 +62,6 @@ router.post("/status", async (req, res) => {
 				stopLat: parseFloat(stop.stop_lat),
 				stopLon: parseFloat(stop.stop_lon),
 				distance: Math.round(dist),
-				routeId: stop.route_id,
 				routeIds: stop.route_ids,
 			};
 		}
@@ -77,12 +76,9 @@ router.post("/status", async (req, res) => {
 	const userIsNearEnough = minDist <= minDistance;
 
 	const stopId = nearest.stopId;
-	const routeIdsToCheck = Array.isArray(nearest.routeIds)
-		? nearest.routeIds
-		: [nearest.routeId];
+	const routeIdsToCheck = nearest.routeIds;
 	let foundService = false;
 	let nextBus: NextBus | null = null;
-	let foundRouteId: string | null = null;
 	try {
 		const response = await axios.get(GTFS_RT_URL, {
 			responseType: "arraybuffer",
@@ -142,7 +138,6 @@ router.post("/status", async (req, res) => {
 							arrivalTime,
 							delay: arrival?.delay ?? null,
 						};
-						foundRouteId = routeId;
 						foundService = true;
 					}
 				}
@@ -172,10 +167,7 @@ router.post("/status", async (req, res) => {
 				scheduledTime,
 				estimatedTime: nextBus.arrivalTime,
 				delay: nextBus.delay,
-				nearest: {
-					...nearest,
-					routeId: foundRouteId || nearest.routeId,
-				},
+				nearest,
 			};
 
 			// Only return keyword if within 1 minute of arrival time
