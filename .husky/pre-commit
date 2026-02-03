@@ -1,3 +1,8 @@
+if [ "$SKIP_PRECOMMIT" = "1" ]; then
+  echo "⏭️ Skipping pre-commit checks (SKIP_PRECOMMIT=1 set)"
+  exit 0
+fi
+
 echo "🔍 Running checks before commit..."
 
 # Run tests

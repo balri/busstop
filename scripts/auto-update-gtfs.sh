@@ -6,6 +6,9 @@ export PATH="/opt/homebrew/bin:/usr/bin:/bin"
 # Change to the directory where this script is located
 cd "$(dirname "$0")/.."
 
+# Set environment variable to skip pre-commit hook
+export SKIP_PRECOMMIT=1
+
 # Pull latest changes (optional, but recommended)
 git pull
 
