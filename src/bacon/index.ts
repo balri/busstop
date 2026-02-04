@@ -113,7 +113,7 @@ router.get(
 					.json({ error: "Failed to fetch a random actor." });
 			}
 
-			const isInSheet = await isActorInSheet(Number(actor.id), 30);
+			const isInSheet = await isActorInSheet(Number(actor.id), 90);
 			if (isInSheet) {
 				console.log(
 					`Actor ID ${actor.id} already in sheet for recent days. Retrying...`,

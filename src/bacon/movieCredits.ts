@@ -29,7 +29,7 @@ export const movieCredits = async (
 	actorId: number,
 	filterMovies: boolean = true,
 ): Promise<Movie[]> => {
-	const cacheKey = `movies-${actorId}`;
+	const cacheKey = `movies-${actorId}-${filterMovies ? "filtered" : "all"}`;
 	const cached = getCache(cacheKey);
 	if (cached) {
 		console.log(`Cached movies for actor ID: ${actorId}`);
