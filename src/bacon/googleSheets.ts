@@ -56,6 +56,40 @@ export async function getDailyActorFromSheet(
 	return null;
 }
 
+/**
+ * Checks if the provided actor ID is already present in the DailyActor sheet.
+ * Optionally, you can provide a window (number of days) to limit the search to recent entries.
+ * @param actorId The actor's TMDB ID to check for.
+ * @param daysWindow Optional. If provided, only checks the last N days (by date order in the sheet).
+ * @returns true if the actor is found, false otherwise.
+ */
+export async function isActorInSheet(
+	actorId: number,
+	daysWindow?: number,
+): Promise<boolean> {
+	const res = await sheets.spreadsheets.values.get({
+		spreadsheetId: SHEET_ID,
+		range: SHEET_RANGE,
+	});
+	const rows = res.data.values || [];
+	let filteredRows = rows;
+	if (daysWindow && daysWindow > 0) {
+		// Sort rows by date descending, then take the most recent N
+		filteredRows = rows
+			.filter((row) => row[COLUMN_DATE])
+			.sort((a, b) =>
+				(b[COLUMN_DATE] || "").localeCompare(a[COLUMN_DATE] || ""),
+			)
+			.slice(0, daysWindow);
+	}
+	for (const row of filteredRows) {
+		if (row[COLUMN_ACTOR_ID] && Number(row[COLUMN_ACTOR_ID]) === actorId) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export async function setDailyActorInSheet(
 	date: string | null,
 	actor: Actor,

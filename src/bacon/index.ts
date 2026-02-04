@@ -6,7 +6,11 @@ import { DateTime } from "luxon";
 import { actorCredits, getActor, getRandomActor } from "./actorCredits";
 import { getBaconNumber } from "./baconNumber";
 import { getDailyActorFromCache } from "./cache";
-import { getDailyActorFromSheet, setDailyActorInSheet } from "./googleSheets";
+import {
+	getDailyActorFromSheet,
+	isActorInSheet,
+	setDailyActorInSheet,
+} from "./googleSheets";
 import { movieCredits } from "./movieCredits";
 
 const router = express.Router();
@@ -107,6 +111,15 @@ router.get(
 				return res
 					.status(500)
 					.json({ error: "Failed to fetch a random actor." });
+			}
+
+			const isInSheet = await isActorInSheet(Number(actor.id), 30);
+			if (isInSheet) {
+				console.log(
+					`Actor ID ${actor.id} already in sheet for recent days. Retrying...`,
+				);
+				retries++;
+				continue;
 			}
 
 			const baconNumberResult = await getBaconNumber(
