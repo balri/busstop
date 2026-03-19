@@ -100,8 +100,8 @@
     "stop_code": "011168",
     "stop_name": "Cultural Centre station, platform 2",
     "stop_desc": "",
-    "stop_lat": -27.473452,
-    "stop_lon": 153.019127,
+    "stop_lat": -27.473455,
+    "stop_lon": 153.019148,
     "direction_id": 0,
     "route_ids": [
       "61-4762"
