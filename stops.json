@@ -465,5 +465,17 @@
     "route_ids": [
       "61-4799"
     ]
+  },
+  {
+    "stop_id": "828",
+    "stop_code": "000828",
+    "stop_name": "Latrobe Tce at Old Paddo Post Office, stop 8",
+    "stop_desc": "",
+    "stop_lat": -27.460241,
+    "stop_lon": 153.002176,
+    "direction_id": 1,
+    "route_ids": [
+      "61-4799"
+    ]
   }
 ]
