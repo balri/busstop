@@ -88,3 +88,16 @@ npx cleancss -o public/style.min.css public/style.css
 ```
 npm run format
 ```
+
+# Git
+
+```
+git checkout main
+```
+Then make your changes, commit, and push:
+
+```
+git add <files>
+git commit -m "your message"
+git push origin main
+```
