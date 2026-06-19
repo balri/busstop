@@ -48,6 +48,7 @@ export async function getDailyActorFromSheet(
 		}
 
 		actor.bacon_number = Number(dailyActor[COLUMN_BACON_NUMBER] || 0);
+		actor.game_number = Number(dailyActor[COLUMN_INDEX] || 0);
 		const cacheKey = `daily-actor-${date}`;
 		setCache(cacheKey, actor, 86400); // Cache for 24 hours
 		return actor;

@@ -8,6 +8,7 @@ export interface Actor {
 	known_for_department: string;
 	adult: boolean;
 	bacon_number?: number;
+	game_number?: number;
 }
 
 export interface Movie {
