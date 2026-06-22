@@ -218,7 +218,7 @@
   {
     "stop_id": "19052",
     "stop_code": "019052",
-    "stop_name": "South Bank busway station, platform 1",
+    "stop_name": "South Bank busway station, platform 5",
     "stop_desc": "",
     "stop_lat": -27.480721,
     "stop_lon": 153.021835,
@@ -254,7 +254,7 @@
   {
     "stop_id": "19064",
     "stop_code": "019064",
-    "stop_name": "South Bank busway station, platform 2",
+    "stop_name": "South Bank busway station, platform 4",
     "stop_desc": "",
     "stop_lat": -27.481023,
     "stop_lon": 153.022209,
