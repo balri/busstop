@@ -94,6 +94,7 @@ npm run format
 ```
 git checkout main
 ```
+
 Then make your changes, commit, and push:
 
 ```

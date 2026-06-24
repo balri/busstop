@@ -303,23 +303,37 @@ function startCountdown(data) {
 
 			if (data.keyword) {
 				showBusStopAndStopRoad(data);
-			} else if (
-				data.nearest.distance !== null &&
-				data.nearest.distance <= maxDistance
-			) {
-				window.location.reload();
 			} else {
-				updateMessages(
-					data.nearest.stopName || "Bus Status",
-					"NOT CLOSE ENOUGH",
-					`
+				const checkDistance = (currentDistance) => {
+					if (
+						currentDistance !== null &&
+						currentDistance <= maxDistance
+					) {
+						window.location.reload();
+					} else {
+						updateMessages(
+							data.nearest.stopName || "Bus Status",
+							"NOT CLOSE ENOUGH",
+							`
                         The bus has arrived!<br>
                         You need to get closer to the bus stop.
                     `,
-					data.nearest,
-				);
-				showBusStopAndStopRoad(data);
-				stopPolling();
+							data.nearest,
+						);
+						showBusStopAndStopRoad(data);
+						stopPolling();
+					}
+				};
+
+				if (data.nearest.stopLat && data.nearest.stopLon) {
+					getLiveDistance(
+						data.nearest.stopLat,
+						data.nearest.stopLon,
+						checkDistance,
+					);
+				} else {
+					checkDistance(data.nearest.distance);
+				}
 			}
 		}
 	}

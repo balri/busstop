@@ -12,7 +12,7 @@ fi
 
 export SECRET_KEYWORD="test"
 export ACCEPTABLE_DELAY=60
-export MIN_DISTANCE=500
+export MIN_DISTANCE=400
 
 echo "Secret keyword set to $SECRET_KEYWORD"
 echo "Acceptable delay set to $ACCEPTABLE_DELAY seconds"
