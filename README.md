@@ -74,13 +74,13 @@ npx terser public/main.js -o public/main.min.js
 ```
 
 ```
-npx cleancss -o public/style.min.css public/style.css
+npx lightningcss --minify -o public/style.min.css public/style.css
 ```
 
 # Change bus route
 
 1. Update `TARGET_ROUTE_SHORT_NAME` in `src/filter/routes.ts`
-2. Run `npx ts-node src/filter/index.ts` to update feed
+2. Run `npx tsx src/filter/index.ts` to update feed
 3. Get route colour from `feeds/routes.txt` and update in `public/bus.svg`
 
 # Prettier
