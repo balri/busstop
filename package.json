@@ -84,8 +84,8 @@
 		"fsevents@2.3.3": true,
 		"puppeteer@24.33.0": true,
 		"esbuild@0.28.1": true,
-		"protobufjs@7.6.4": true,
 		"unrs-resolver@1.12.2": true,
-		"lightningcss-cli@1.32.0": true
+		"lightningcss-cli@1.32.0": true,
+		"protobufjs@7.6.5": true
 	}
 }
