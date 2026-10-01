@@ -6,7 +6,7 @@
 		"test": "jest",
 		"build": "tsc",
 		"start": "node dist/index.js",
-		"dev": "tsx watch src/index.ts",
+		"dev": "tsx watch -r dotenv/config src/index.ts",
 		"format": "prettier --write .",
 		"lint": "npm run eslint && npm run lint:css && npm run typecheck",
 		"lint:fix": "npm run eslint:fix && npm run lint:css:fix && npm run typecheck",
