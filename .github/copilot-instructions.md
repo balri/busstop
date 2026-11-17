@@ -4,10 +4,9 @@ This guide enables AI coding agents to be productive in the `busstop` codebase. 
 
 ## Architecture Overview
 
-- **Main app**: Core logic is in `src/`, with subfolders for filtering (`src/filter/`), routing (`src/routes/`), and a separate `bacon` backend (`src/bacon/`).
+- **Main app**: Core logic is in `src/`, with subfolders for filtering (`src/filter/`) and routing (`src/routes/`).
 - **Data flow**: GTFS transit data is processed via scripts and TypeScript modules, then served via a Node.js backend. The frontend is in `public/`.
 - **Feeds**: GTFS feeds are downloaded and updated using scripts and TypeScript commands. See `src/filter/index.ts` for feed update logic.
-- **Bacon backend**: `src/bacon/` is a copied backend for another app, serving endpoints for actor/movie data. It is not directly related to bus stop logic.
 
 ## Key Workflows
 
@@ -29,19 +28,16 @@ This guide enables AI coding agents to be productive in the `busstop` codebase. 
 
 - **External feeds**: GTFS data from TransLink (see README for URL).
 - **Uptime monitoring**: UptimeRobot dashboard is referenced for service health.
-- **Bacon API**: Endpoints for actor/movie data (see `src/bacon/README.md`).
 
 ## Examples
 
 - Update feed: `npx ts-node src/filter/index.ts`
 - Screenshot: `node scripts/screenshot.js`
-- Bacon API: `http://localhost:3000/bacon/api/random-actor`
 
 ## References
 
 - See `README.md` for workflow commands and config values.
-- See `src/bacon/README.md` for Bacon backend API usage.
-- Key logic: `src/filter/`, `src/routes/`, `src/bacon/`
+- Key logic: `src/filter/`, `src/routes/`
 
 ---
 
