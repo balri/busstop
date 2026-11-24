@@ -82,6 +82,9 @@ router.post("/status", async (req, res) => {
 	try {
 		const response = await axios.get(GTFS_RT_URL, {
 			responseType: "arraybuffer",
+			headers: {
+				"User-Agent": "Mozilla/5.0",
+			},
 		});
 		const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
 			new Uint8Array(response.data),
