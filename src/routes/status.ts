@@ -198,7 +198,7 @@ router.post("/status", async (req, res) => {
 				"GTFS-RT body:",
 				Buffer.from(e.response?.data || [])
 					.toString("utf8")
-					.substring(0, 1000),
+					.slice(-1500),
 			);
 		} else {
 			console.error("Unexpected error:", e);
