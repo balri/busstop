@@ -187,8 +187,19 @@ router.post("/status", async (req, res) => {
 			res.json({ status: "no_service" });
 			return;
 		}
-	} catch (e) {
-		console.error("Failed to fetch GTFS-RT feed:", e);
+	} catch (e: unknown) {
+		if (axios.isAxiosError(e)) {
+			console.error("GTFS-RT status:", e.response?.status);
+			console.error("GTFS-RT headers:", e.response?.headers);
+			console.error(
+				"GTFS-RT body:",
+				Buffer.from(e.response?.data || [])
+					.toString("utf8")
+					.substring(0, 1000),
+			);
+		} else {
+			console.error("Unexpected error:", e);
+		}
 		res.status(500).json({ error: "Failed to fetch GTFS-RT feed" });
 		return;
 	}
