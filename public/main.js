@@ -10,6 +10,7 @@ const starCanvas = document.getElementById("star-canvas");
 const statusText = document.getElementById("status-text");
 const sun = document.getElementById("sun");
 const timesText = document.getElementById("times-text");
+const statusApiUrl = "https://busstopv2.vercel.app/api/status";
 
 let currentStatus = null;
 let pollTimer = null;
@@ -159,7 +160,7 @@ async function fetchStatus() {
 			const encryptedLoc = xorEncrypt(loc, window.BUS_TOKEN);
 			updateSkyBySunTimes(latitude, longitude);
 
-			fetch("/status", {
+			fetch(statusApiUrl, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({

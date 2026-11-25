@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -6,6 +7,7 @@ import statusRouter, { BUS_TOKEN } from "./routes/status";
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
